@@ -1,7 +1,8 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { Plus, Pencil, Trash2, X, Upload, Loader2, Search, Images } from 'lucide-react';
+import { Plus, Pencil, Trash2, X, Upload, Loader2, Search, Images, Download, FileSpreadsheet } from 'lucide-react';
 import ProductGalleryManager from '@/components/admin/ProductGalleryManager';
+import { csvToRows, rowsToCsv, downloadCsv } from '@/lib/csv';
 
 type Product = {
   id: number; name: string; category: string;
@@ -94,6 +95,65 @@ export default function AdminProductsPage() {
     load();
   };
 
+  const handleExportCsv = () => {
+    const header = ['id','name','category','price','originalPrice','stock','badge','emoji','description','active'];
+    const rows = products.map((p) => [
+      p.id, p.name, p.category, p.price, p.originalPrice ?? 0, p.stock ?? 0,
+      p.badge || '', p.emoji || '', p.description || '', p.active ?? 1,
+    ]);
+    const csv = rowsToCsv([header, ...rows]);
+    downloadCsv(`products-${new Date().toISOString().split('T')[0]}.csv`, csv);
+  };
+
+  const handleImportCsv = async (file: File) => {
+    const text = await file.text();
+    const rows = csvToRows(text);
+    if (rows.length < 2) { alert('CSV is empty'); return; }
+
+    const header = rows[0].map((h) => h.trim().toLowerCase());
+    const idx = {
+      name: header.indexOf('name'),
+      category: header.indexOf('category'),
+      price: header.indexOf('price'),
+      originalPrice: header.indexOf('originalprice'),
+      stock: header.indexOf('stock'),
+      badge: header.indexOf('badge'),
+      emoji: header.indexOf('emoji'),
+      description: header.indexOf('description'),
+    };
+
+    if (idx.name < 0 || idx.price < 0) {
+      alert('CSV must have at least "name" and "price" columns');
+      return;
+    }
+
+    const parsed = rows.slice(1).map((r) => ({
+      name: r[idx.name] || '',
+      category: idx.category >= 0 ? r[idx.category] : 'General',
+      price: Number(r[idx.price]) || 0,
+      originalPrice: idx.originalPrice >= 0 ? Number(r[idx.originalPrice]) || 0 : 0,
+      stock: idx.stock >= 0 ? Number(r[idx.stock]) || 0 : 100,
+      badge: idx.badge >= 0 ? r[idx.badge] : '',
+      emoji: idx.emoji >= 0 ? r[idx.emoji] : '📦',
+      description: idx.description >= 0 ? r[idx.description] : '',
+    })).filter((p) => p.name);
+
+    if (!confirm(`Import ${parsed.length} products?`)) return;
+
+    try {
+      const res = await fetch('/api/admin/products/import', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ products: parsed }),
+      });
+      const data = await res.json();
+      alert(`✓ Imported ${data.created} products${data.failed ? ` (${data.failed} failed)` : ''}`);
+      load();
+    } catch {
+      alert('Import failed');
+    }
+  };
+
   const filtered = products.filter((p) =>
     !search.trim() || p.name.toLowerCase().includes(search.toLowerCase()) ||
     p.category.toLowerCase().includes(search.toLowerCase())
@@ -109,10 +169,21 @@ export default function AdminProductsPage() {
           <h1 className="text-3xl font-bold mb-1">Products</h1>
           <p className="text-sm text-text-secondary">{products.length} product{products.length !== 1 ? 's' : ''} in catalogue</p>
         </div>
-        <button onClick={openCreate}
-          className="flex items-center gap-2 bg-brand-accent text-white font-semibold px-5 py-2.5 rounded-lg hover:bg-[#e55a2b] transition text-sm">
-          <Plus size={16} /> Add Product
-        </button>
+        <div className="flex flex-wrap gap-2">
+          <label className="flex items-center gap-2 bg-white border-2 border-border text-text-primary font-semibold px-4 py-2.5 rounded-lg hover:border-brand-accent hover:text-brand-accent transition text-sm cursor-pointer">
+            <FileSpreadsheet size={16} /> Import CSV
+            <input type="file" accept=".csv" className="hidden"
+              onChange={(e) => { const f = e.target.files?.[0]; if (f) handleImportCsv(f); e.target.value = ''; }} />
+          </label>
+          <button onClick={handleExportCsv}
+            className="flex items-center gap-2 bg-white border-2 border-border text-text-primary font-semibold px-4 py-2.5 rounded-lg hover:border-brand-accent hover:text-brand-accent transition text-sm">
+            <Download size={16} /> Export CSV
+          </button>
+          <button onClick={openCreate}
+            className="flex items-center gap-2 bg-brand-accent text-white font-semibold px-5 py-2.5 rounded-lg hover:bg-[#e55a2b] transition text-sm">
+            <Plus size={16} /> Add Product
+          </button>
+        </div>
       </div>
 
       <div className="relative max-w-[400px] mb-6">
