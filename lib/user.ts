@@ -116,11 +116,13 @@ export async function fetchOrders(email?: string): Promise<Order[]> {
   // ✅ ONLY local orders that belong to this user
   const localList = filterLocalByEmail(readLocal(), target);
 
-  // Merge + dedupe by ID
+  // Merge — ✅ API (D1) WINS. Local only fills in orders D1 doesn't have yet.
   const byId = new Map<string, Order>();
-  [...apiList, ...localList].forEach((o) => {
-    if (!o.id) return;
-    byId.set(o.id, o);
+  // First pass: add all API orders (authoritative)
+  apiList.forEach((o) => { if (o.id) byId.set(o.id, o); });
+  // Second pass: add local orders ONLY if not already in API
+  localList.forEach((o) => {
+    if (o.id && !byId.has(o.id)) byId.set(o.id, o);
   });
 
   return Array.from(byId.values()).sort((a, b) => {

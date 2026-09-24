@@ -1,8 +1,8 @@
 'use client';
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import {
-  Truck, Search, Package, Clock, CheckCheck, MapPin, Check, XCircle, Circle,
+  Truck, Search, Package, Clock, CheckCheck, MapPin, Check, XCircle, RefreshCw,
 } from 'lucide-react';
 import { AccountShell } from '@/components/account/AccountShell';
 import { readUser, fetchOrders, type Order, type StoredUser } from '@/lib/user';
@@ -21,12 +21,35 @@ export default function TrackPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [id, setId]         = useState('');
   const [result, setResult] = useState<Order | 'not-found' | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
+  // Auto-load orders + poll every 5 seconds
   useEffect(() => {
     const u = readUser();
     setUser(u);
-    if (u?.email) fetchOrders(u.email).then(setOrders);
-  }, []);
+    if (!u?.email) return;
+
+    const load = async () => {
+      const list = await fetchOrders(u.email);
+      setOrders(list);
+      setLastUpdated(new Date());
+      // ✅ Re-run search against fresh data if we had a result
+      const currentId = (result && result !== 'not-found') ? result.id : null;
+      if (currentId) {
+        const fresh = list.find((o) => o.id === currentId);
+        if (fresh) setResult(fresh);
+      }
+    };
+
+    load();
+    const interval = setInterval(load, 5000);
+    window.addEventListener('storage', load);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('storage', load);
+    };
+  }, [(result && result !== 'not-found') ? result.id : null]); // re-run when search target changes
 
   const handleTrack = (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,6 +58,20 @@ export default function TrackPage() {
     const found = orders.find((o) => o.id.toUpperCase() === needle);
     setResult(found || 'not-found');
   };
+
+  const manualRefresh = useCallback(async () => {
+    if (!user?.email) return;
+    setRefreshing(true);
+    const list = await fetchOrders(user.email);
+    setOrders(list);
+    setLastUpdated(new Date());
+    const currentId = (result && result !== 'not-found') ? result.id : null;
+    if (currentId) {
+      const fresh = list.find((o) => o.id === currentId);
+      if (fresh) setResult(fresh);
+    }
+    setTimeout(() => setRefreshing(false), 400);
+  }, [user?.email, result]);
 
   if (!user) {
     return (
@@ -58,15 +95,32 @@ export default function TrackPage() {
 
   return (
     <AccountShell user={user}>
-      <h1 className="text-3xl font-bold mb-2">Track Order</h1>
-      <p className="text-text-secondary mb-8 text-sm">Enter your order ID to see live status.</p>
+      <div className="flex justify-between items-start mb-2 flex-wrap gap-2">
+        <div>
+          <h1 className="text-3xl font-bold mb-2">Track Order</h1>
+          <p className="text-text-secondary text-sm">Enter your order ID to see live status.</p>
+        </div>
+        <button
+          onClick={manualRefresh}
+          disabled={refreshing}
+          className="flex items-center gap-2 text-xs font-semibold px-3 py-2 rounded-lg border-2 border-border hover:border-brand-accent hover:text-brand-accent transition"
+        >
+          <RefreshCw size={13} className={refreshing ? 'animate-spin' : ''} /> Refresh
+        </button>
+      </div>
+
+      {lastUpdated && (
+        <p className="text-[11px] text-text-secondary mb-6">
+          Auto-updates every 5s · Last checked: {lastUpdated.toLocaleTimeString('en-PK')}
+        </p>
+      )}
 
       <form onSubmit={handleTrack} className="flex gap-3 mb-6">
         <input
           id="track-id"
           name="orderId"
           value={id}
-          onChange={(e) => setId(e.target.value)}
+          onChange={(e) => setId(e.target.value.toUpperCase())}
           placeholder="e.g. PKL-TEY8A8"
           className="flex-1 px-4 py-3 rounded-xl border-2 border-border focus:border-brand-accent outline-none text-sm transition"
         />
@@ -113,21 +167,16 @@ export default function TrackPage() {
             </div>
           ) : (
             <>
-              {/* Progress labels — 6 stages */}
               <div className="flex justify-between text-[10px] sm:text-xs font-semibold text-text-secondary mb-2">
                 {STAGES.map((s, i) => (
-                  <span
-                    key={s.key}
-                    className={`text-center flex-1 ${i <= stageIndex ? 'text-brand-accent' : ''}`}
-                  >
+                  <span key={s.key} className={`text-center flex-1 ${i <= stageIndex ? 'text-brand-accent' : ''}`}>
                     {s.label}
                   </span>
                 ))}
               </div>
-              {/* Progress bar */}
               <div className="h-2 bg-brand-secondary rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-brand-accent transition-all"
+                  className="h-full bg-brand-accent transition-all duration-500"
                   style={{ width: `${((stageIndex + 1) / STAGES.length) * 100}%` }}
                 />
               </div>
@@ -136,7 +185,6 @@ export default function TrackPage() {
         </div>
       )}
 
-      {/* Tracking stages list with current highlighted */}
       <div className="bg-white border border-border rounded-2xl p-6">
         <h3 className="font-bold mb-5 flex items-center gap-2">
           <Truck className="text-brand-accent" size={18} />
@@ -148,7 +196,6 @@ export default function TrackPage() {
             const Icon = s.icon;
             const isCurrent = order && i === stageIndex;
             const isDone = order && i < stageIndex;
-            const isPending = !order || i > stageIndex;
 
             return (
               <li
@@ -161,12 +208,9 @@ export default function TrackPage() {
                     : 'border-2 border-transparent'
                 }`}
               >
-                {/* Step number / icon */}
                 <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 ${
-                  isCurrent
-                    ? 'bg-brand-accent text-white'
-                    : isDone
-                    ? 'bg-green-500 text-white'
+                  isCurrent ? 'bg-brand-accent text-white'
+                    : isDone ? 'bg-green-500 text-white'
                     : 'bg-brand-secondary text-text-secondary'
                 }`}>
                   {isDone ? <Check size={16} /> : <Icon size={16} />}
@@ -179,9 +223,7 @@ export default function TrackPage() {
                     {s.label}
                   </div>
                   {isCurrent && (
-                    <div className="text-[11px] text-brand-accent font-semibold mt-0.5">
-                      ← Current status
-                    </div>
+                    <div className="text-[11px] text-brand-accent font-semibold mt-0.5">← Current status</div>
                   )}
                   {isDone && (
                     <div className="text-[11px] text-green-600 mt-0.5">Completed</div>
@@ -194,7 +236,6 @@ export default function TrackPage() {
           })}
         </ol>
 
-        {/* Cancelled notice if needed */}
         {order && isCancelled && (
           <div className="mt-5 flex items-center gap-3 p-3 rounded-xl bg-red-50 border-2 border-red-200">
             <div className="w-9 h-9 rounded-full bg-red-500 text-white flex items-center justify-center shrink-0">
