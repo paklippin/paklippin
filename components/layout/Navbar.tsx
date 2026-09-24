@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ShoppingCart, Heart, User, LogOut, Menu, Search } from 'lucide-react';
 import { useUI } from '@/lib/ui-store';
+import { useI18n } from '@/lib/use-i18n';
 import MobileNav from './MobileNav';
 
 type UserInfo = { name?: string; email?: string } | null;
@@ -15,6 +16,7 @@ export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [search, setSearch] = useState('');
   const openCart = useUI((s) => s.openCart);
+  const { t } = useI18n();
   const router = useRouter();
 
   useEffect(() => {
@@ -71,14 +73,14 @@ export default function Navbar() {
   };
 
   const navLinks = [
-    { href:'/shop',         label:'Shop' },
-    { href:'/shop',         label:'All Products' },
-    { href:'/categories',   label:'Categories' },
-    { href:'/new-arrivals', label:'New Arrivals' },
-    { href:'/sale',         label:'Sale' },
-    { href:'/about',        label:'About Us' },
-    { href:'/contact',      label:'Contact' },
-    { href:'/faq',          label:'FAQ' },
+    { href:'/shop',         label:t('nav.shop') },
+    { href:'/shop',         label:t('nav.allProducts') },
+    { href:'/categories',   label:t('nav.categories') },
+    { href:'/new-arrivals', label:t('nav.newArrivals') },
+    { href:'/sale',         label:t('nav.sale') },
+    { href:'/about',        label:t('nav.about') },
+    { href:'/contact',      label:t('nav.contact') },
+    { href:'/faq',          label:t('nav.faq') },
   ];
 
   const firstName = user?.name?.split(' ')[0] || 'User';
@@ -105,7 +107,7 @@ export default function Navbar() {
               type="search"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search products, categories, brands..."
+              placeholder={t('nav.search')}
               autoComplete="off"
               className="w-full pl-11 pr-4 py-3 rounded-full border-2 border-border focus:border-brand-accent focus:outline-none transition text-sm"
             />
@@ -129,10 +131,10 @@ export default function Navbar() {
                         <div className="text-sm font-semibold text-text-primary truncate">{user.name}</div>
                         <div className="text-xs text-text-secondary truncate">{user.email}</div>
                       </div>
-                      <Link href="/account" onClick={() => setMenuOpen(false)} className="flex items-center gap-2 px-4 py-2.5 text-sm hover:bg-brand-secondary transition"><User size={15}/> My Account</Link>
+                      <Link href="/account" onClick={() => setMenuOpen(false)} className="flex items-center gap-2 px-4 py-2.5 text-sm hover:bg-brand-secondary transition"><User size={15}/> {t('nav.account')}</Link>
                       <Link href="/account/orders" onClick={() => setMenuOpen(false)} className="flex items-center gap-2 px-4 py-2.5 text-sm hover:bg-brand-secondary transition">📦 My Orders</Link>
                       <Link href="/account/track" onClick={() => setMenuOpen(false)} className="flex items-center gap-2 px-4 py-2.5 text-sm hover:bg-brand-secondary transition">🚚 Track Order</Link>
-                      <button onClick={handleLogout} className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 transition border-t border-border mt-1"><LogOut size={15}/> Logout</button>
+                      <button onClick={handleLogout} className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 transition border-t border-border mt-1"><LogOut size={15}/> {t('nav.logout')}</button>
                     </div>
                   </>
                 )}
@@ -140,7 +142,7 @@ export default function Navbar() {
             ) : (
               <Link href="/account" className="flex items-center gap-2 px-3 sm:px-4 py-2 rounded-full border-2 border-border text-text-primary hover:border-brand-accent hover:text-brand-accent transition text-sm font-semibold">
                 <User size={16} />
-                <span className="hidden sm:inline">Login / Register</span>
+                <span className="hidden sm:inline">{t('nav.loginRegister')}</span>
               </Link>
             )}
 

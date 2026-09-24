@@ -4,11 +4,13 @@ import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { Home, ShoppingBag, ShoppingCart, User } from 'lucide-react';
 import { useUI } from '@/lib/ui-store';
+import { useI18n } from '@/lib/use-i18n';
 
 export default function BottomNav() {
   const pathname = usePathname();
   const [cartCount, setCartCount] = useState(0);
   const openCart = useUI((s) => s.openCart);
+  const { t } = useI18n();
 
   useEffect(() => {
     const read = () => {
@@ -26,9 +28,9 @@ export default function BottomNav() {
   }, []);
 
   const items = [
-    { href: '/',              label: 'Home',    icon: Home },
-    { href: '/shop',          label: 'Shop',    icon: ShoppingBag },
-    { href: '/account',       label: 'Account', icon: User },
+    { href: '/',              label: t('nav.home'),    icon: Home },
+    { href: '/shop',          label: t('nav.shop'),    icon: ShoppingBag },
+    { href: '/account',       label: t('nav.account'), icon: User },
   ];
 
   const isActive = (href: string) =>

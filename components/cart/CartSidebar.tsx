@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import type { Product } from '@/components/shop/ProductCard';
 import { useSettings } from '@/lib/settings-store';
 import { useCurrency } from '@/lib/use-currency';
+import { useI18n } from '@/lib/use-i18n';
 
 export type CartItem = Product & { quantity: number };
 
@@ -18,6 +19,7 @@ type Props = {
 export default function CartSidebar({ open, items, onClose, onQty, onRemove }: Props) {
   const { settings, load } = useSettings();
   const { price } = useCurrency();
+  const { t } = useI18n();
 
   useEffect(() => { load(); }, [load]);
 
@@ -38,13 +40,13 @@ export default function CartSidebar({ open, items, onClose, onQty, onRemove }: P
         className={`fixed top-0 right-0 h-screen w-full sm:w-[400px] bg-white z-[2000] flex flex-col transition-transform duration-300 shadow-2xl ${open ? 'translate-x-0' : 'translate-x-full'}`}
       >
         <div className="px-5 py-5 border-b border-border flex justify-between items-center">
-          <h3 className="text-lg font-semibold">Shopping Cart ({count})</h3>
+          <h3 className="text-lg font-semibold">{t('cart.title')} ({count})</h3>
           <button onClick={onClose} className="text-2xl text-text-secondary leading-none" aria-label="Close cart">×</button>
         </div>
 
         <div className="flex-1 overflow-y-auto px-5">
           {items.length === 0 ? (
-            <p className="text-center text-text-secondary mt-10 text-sm">Your cart is empty.</p>
+            <p className="text-center text-text-secondary mt-10 text-sm">{t('cart.empty')}</p>
           ) : (
             items.map((item) => (
               <div key={item.id} className="flex gap-4 py-4 border-b border-border">
@@ -88,19 +90,19 @@ export default function CartSidebar({ open, items, onClose, onQty, onRemove }: P
 
           <div className="space-y-2 text-sm mb-3">
             <div className="flex justify-between text-text-secondary">
-              <span>Subtotal:</span>
+              <span>{t('cart.subtotal')}:</span>
               <span>{price(subtotal)}</span>
             </div>
             <div className="flex justify-between text-text-secondary">
-              <span>Delivery:</span>
+              <span>{t('cart.delivery')}:</span>
               <span className={freeShipping ? 'text-brand-success font-semibold' : ''}>
-                {freeShipping ? 'FREE' : price(deliveryFee)}
+                {freeShipping ? t('cart.free') : price(deliveryFee)}
               </span>
             </div>
           </div>
 
           <div className="flex justify-between text-lg font-bold mb-4 pt-3 border-t border-border">
-            <span>Total:</span>
+            <span>{t('cart.total')}:</span>
             <span>{price(total)}</span>
           </div>
 
@@ -113,7 +115,7 @@ export default function CartSidebar({ open, items, onClose, onQty, onRemove }: P
                 : 'bg-gray-200 text-gray-500 pointer-events-none'
             }`}
           >
-            Proceed to Checkout
+            {t('cart.checkout')}
           </Link>
 
           <p className="text-[11px] text-text-secondary text-center mt-3 leading-relaxed">
