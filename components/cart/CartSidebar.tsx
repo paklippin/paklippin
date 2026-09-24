@@ -1,6 +1,8 @@
 'use client';
 import Link from 'next/link';
+import { useEffect } from 'react';
 import type { Product } from '@/components/shop/ProductCard';
+import { useSettings } from '@/lib/settings-store';
 
 export type CartItem = Product & { quantity: number };
 
@@ -13,11 +15,15 @@ type Props = {
 };
 
 export default function CartSidebar({ open, items, onClose, onQty, onRemove }: Props) {
+  const { settings, load } = useSettings();
+
+  useEffect(() => { load(); }, [load]);
+
   const subtotal = items.reduce((s, i) => s + i.price * i.quantity, 0);
   const count    = items.reduce((s, i) => s + i.quantity, 0);
 
-  const freeShipping = subtotal >= 5000;
-  const deliveryFee  = freeShipping ? 0 : (items.length ? 300 : 0);
+  const freeShipping = subtotal >= settings.shipping_threshold;
+  const deliveryFee  = freeShipping ? 0 : (items.length ? settings.delivery_fee : 0);
   const total        = subtotal + deliveryFee;
 
   return (
@@ -40,8 +46,16 @@ export default function CartSidebar({ open, items, onClose, onQty, onRemove }: P
           ) : (
             items.map((item) => (
               <div key={item.id} className="flex gap-4 py-4 border-b border-border">
-                <div className="w-20 h-20 bg-brand-secondary rounded-lg flex items-center justify-center text-2xl shrink-0">
-                  {item.emoji}
+                <div className="w-20 h-20 bg-brand-secondary rounded-lg flex items-center justify-center text-2xl shrink-0 overflow-hidden">
+                  {item.imageUrl ? (
+                    <img
+                      src={item.imageUrl.startsWith('http') ? item.imageUrl : `${process.env.NEXT_PUBLIC_API_URL || 'https://shop.paklippin.com'}${item.imageUrl}`}
+                      alt={item.name}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    item.emoji
+                  )}
                 </div>
                 <div className="flex-1">
                   <div className="font-semibold text-sm mb-1">{item.name}</div>
@@ -63,7 +77,7 @@ export default function CartSidebar({ open, items, onClose, onQty, onRemove }: P
         <div className="p-5 border-t border-border">
           {!freeShipping && subtotal > 0 && (
             <div className="text-xs text-text-secondary mb-3 text-center">
-              Add <strong className="text-brand-accent">Rs {(5000 - subtotal).toLocaleString()}</strong> more for free shipping
+              Add <strong className="text-brand-accent">Rs {(settings.shipping_threshold - subtotal).toLocaleString()}</strong> more for free shipping
             </div>
           )}
           {freeShipping && subtotal > 0 && (
