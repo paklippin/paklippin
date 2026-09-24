@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { X } from 'lucide-react';
 import ModalViewer from '@/components/3d/ModalViewer';
 import ReviewSection from '@/components/shop/ReviewSection';
+import ProductGallery from '@/components/shop/ProductGallery';
 import type { Product } from '@/components/shop/ProductCard';
 
 type Props = {
@@ -38,11 +39,14 @@ export default function ProductModal({ product, onClose, onAdd }: Props) {
           <X size={20} />
         </button>
 
-        <div className="h-[320px] md:h-[560px] bg-brand-secondary md:rounded-l-3xl overflow-hidden flex items-center justify-center">
-          {hasImage ? (
-            <img src={imgSrc} alt={product.name} className="w-full h-full object-cover" />
-          ) : (
-            mounted && <ModalViewer />
+        <div className="h-[380px] md:h-[560px] bg-brand-secondary md:rounded-l-3xl overflow-hidden flex items-center justify-center">
+          {mounted && (
+            <ProductGallery
+              productId={product.id}
+              fallbackImage={product.imageUrl}
+              productName={product.name}
+              fallbackEmoji={product.emoji}
+            />
           )}
         </div>
 
