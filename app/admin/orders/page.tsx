@@ -1,19 +1,20 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { Printer, Package, Search, X, Check, Truck, XCircle, Clock, CheckCheck, Send, Loader2 } from 'lucide-react';
+import { Printer, Package, Search, X, Check, Truck, XCircle, Clock, CheckCheck, Send as SendIcon, Loader2, MapPin } from 'lucide-react';
 import OrderQR, { type QROrder } from '@/components/admin/OrderQR';
 import { updateOrderStatus, deleteOrder } from '@/lib/user';
 
 const STATUSES = [
-  { value: 'processing', label: 'Processing', color: 'bg-orange-100 text-orange-700', icon: Clock },
-  { value: 'confirmed',  label: 'Confirmed',  color: 'bg-teal-100 text-teal-700',     icon: CheckCheck },
-  { value: 'shipped',    label: 'Shipped',    color: 'bg-blue-100 text-blue-700',     icon: Truck },
-  { value: 'delivered',  label: 'Delivered',  color: 'bg-green-100 text-green-700',   icon: Check },
-  { value: 'cancelled',  label: 'Cancelled',  color: 'bg-red-100 text-red-700',       icon: XCircle },
+  { value: 'placed',            label: 'Placed',           color: 'bg-yellow-100 text-yellow-700',  icon: Package },
+  { value: 'processing',        label: 'Processing',       color: 'bg-orange-100 text-orange-700',  icon: Clock },
+  { value: 'confirmed',         label: 'Confirmed',        color: 'bg-teal-100 text-teal-700',      icon: CheckCheck },
+  { value: 'shipped',           label: 'Shipped',          color: 'bg-blue-100 text-blue-700',      icon: Truck },
+  { value: 'out_for_delivery',  label: 'Out for Delivery', color: 'bg-indigo-100 text-indigo-700',  icon: MapPin },
+  { value: 'delivered',         label: 'Delivered',        color: 'bg-green-100 text-green-700',    icon: Check },
+  { value: 'cancelled',         label: 'Cancelled',        color: 'bg-red-100 text-red-700',        icon: XCircle },
 ];
 
-// Which statuses don't need a note
-const NOTE_OPTIONAL = ['processing', 'confirmed', 'shipped', 'delivered'];
+const NOTE_OPTIONAL = ['placed', 'processing', 'confirmed', 'shipped', 'out_for_delivery', 'delivered'];
 
 export default function AdminOrdersPage() {
   const [orders, setOrders] = useState<QROrder[]>([]);
@@ -21,8 +22,6 @@ export default function AdminOrdersPage() {
   const [search, setSearch] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [activeQR, setActiveQR] = useState<QROrder | null>(null);
-
-  // Note dialog
   const [noteOpen, setNoteOpen] = useState<{ orderId: string; status: string } | null>(null);
   const [noteText, setNoteText] = useState('');
   const [noteBusy, setNoteBusy] = useState(false);
@@ -66,8 +65,6 @@ export default function AdminOrdersPage() {
       return;
     }
     setNoteBusy(true);
-
-    // Optimistic update
     setOrders((prev) =>
       prev.map((o) => o.id === noteOpen.orderId
         ? {
@@ -84,7 +81,6 @@ export default function AdminOrdersPage() {
           }
         : o)
     );
-
     await updateOrderStatus(noteOpen.orderId, noteOpen.status, noteText.trim(), 'admin');
     setNoteBusy(false);
     setNoteOpen(null);
@@ -133,12 +129,25 @@ Total: Rs ${order.total.toLocaleString()}</pre>
 
   const counts: Record<string, number> = {
     all: orders.length,
-    processing: orders.filter((o) => o.status === 'processing').length,
-    confirmed:  orders.filter((o) => o.status === 'confirmed').length,
-    shipped:    orders.filter((o) => o.status === 'shipped').length,
-    delivered:  orders.filter((o) => o.status === 'delivered').length,
-    cancelled:  orders.filter((o) => o.status === 'cancelled').length,
+    placed:           orders.filter((o) => o.status === 'placed').length,
+    processing:       orders.filter((o) => o.status === 'processing').length,
+    confirmed:        orders.filter((o) => o.status === 'confirmed').length,
+    shipped:          orders.filter((o) => o.status === 'shipped').length,
+    out_for_delivery: orders.filter((o) => o.status === 'out_for_delivery').length,
+    delivered:        orders.filter((o) => o.status === 'delivered').length,
+    cancelled:        orders.filter((o) => o.status === 'cancelled').length,
   };
+
+  const FILTERS: [string, string][] = [
+    ['all', 'All'],
+    ['placed', 'Placed'],
+    ['processing', 'Processing'],
+    ['confirmed', 'Confirmed'],
+    ['shipped', 'Shipped'],
+    ['out_for_delivery', 'Out for Delivery'],
+    ['delivered', 'Delivered'],
+    ['cancelled', 'Cancelled'],
+  ];
 
   return (
     <div>
@@ -148,16 +157,9 @@ Total: Rs ${order.total.toLocaleString()}</pre>
       </div>
 
       <div className="flex flex-wrap gap-2 mb-6">
-        {([
-          ['all', 'All'],
-          ['processing', 'Processing'],
-          ['confirmed', 'Confirmed'],
-          ['shipped', 'Shipped'],
-          ['delivered', 'Delivered'],
-          ['cancelled', 'Cancelled'],
-        ]).map(([k, l]) => (
+        {FILTERS.map(([k, l]) => (
           <button key={k} onClick={() => setFilterStatus(k)}
-            className={`px-4 py-2 rounded-full text-xs font-semibold transition ${
+            className={`px-3.5 py-2 rounded-full text-xs font-semibold transition ${
               filterStatus === k ? 'bg-brand-accent text-white'
                 : 'bg-white border-2 border-border text-text-secondary hover:border-brand-accent hover:text-brand-accent'
             }`}>
@@ -184,7 +186,7 @@ Total: Rs ${order.total.toLocaleString()}</pre>
 
       <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-6">
         {filtered.map((o) => {
-          const meta = STATUSES.find((s) => s.value === o.status) || STATUSES[0];
+          const meta = STATUSES.find((s) => s.value === o.status) || STATUSES[1];
           const notes = (o as any).notes || [];
           return (
             <div key={o.id} className="bg-white border border-border rounded-2xl p-5 flex flex-col">
@@ -209,8 +211,7 @@ Total: Rs ${order.total.toLocaleString()}</pre>
                 </div>
               </div>
 
-              {/* STATUS BUTTONS — 5 across, full labels */}
-              <div className="grid grid-cols-5 gap-1 mb-3">
+              <div className="grid grid-cols-4 gap-1 mb-3">
                 {STATUSES.map((s) => {
                   const Icon = s.icon;
                   const active = o.status === s.value;
@@ -218,19 +219,18 @@ Total: Rs ${order.total.toLocaleString()}</pre>
                     <button
                       key={s.value}
                       onClick={() => openNoteDialog(o.id, s.value)}
-                      className={`flex flex-col items-center gap-1 py-2 rounded-lg text-[10px] font-semibold transition ${
+                      className={`flex flex-col items-center gap-1 py-2 px-1 rounded-lg text-[9px] font-semibold transition leading-tight ${
                         active ? s.color + ' ring-2 ring-offset-1 ring-current'
                           : 'bg-brand-secondary text-text-secondary hover:bg-brand-accent hover:text-white'
                       }`}
                     >
                       <Icon size={12} />
-                      <span className="leading-tight text-center">{s.label}</span>
+                      <span className="text-center">{s.label}</span>
                     </button>
                   );
                 })}
               </div>
 
-              {/* Notes timeline (if any) */}
               {notes.length > 0 && (
                 <div className="pt-3 mb-3 border-t border-border">
                   <div className="text-[10px] uppercase tracking-wider font-semibold text-text-secondary mb-2">
@@ -274,7 +274,6 @@ Total: Rs ${order.total.toLocaleString()}</pre>
         })}
       </div>
 
-      {/* NOTE DIALOG */}
       {noteOpen && (
         <div className="fixed inset-0 bg-black/70 z-[3000] flex items-center justify-center p-4" onClick={() => setNoteOpen(null)}>
           <div onClick={(e) => e.stopPropagation()} className="bg-white rounded-2xl max-w-[440px] w-full p-6 relative">
@@ -307,6 +306,7 @@ Total: Rs ${order.total.toLocaleString()}</pre>
                     placeholder={
                       noteOpen.status === 'cancelled' ? 'e.g. Customer requested cancellation' :
                       noteOpen.status === 'shipped' ? 'e.g. Shipped via TCS, tracking #ABC123' :
+                      noteOpen.status === 'out_for_delivery' ? 'e.g. Rider on the way' :
                       noteOpen.status === 'delivered' ? 'e.g. Delivered successfully' :
                       'Add a note (optional)'
                     }
@@ -315,22 +315,22 @@ Total: Rs ${order.total.toLocaleString()}</pre>
                     className="w-full px-3 py-2 rounded-lg border-2 border-border focus:border-brand-accent outline-none text-sm resize-none"
                   />
 
-                  {/* Quick reason chips for cancellations */}
                   {noteOpen.status === 'cancelled' && (
                     <div className="flex flex-wrap gap-1.5 mt-2">
-                      {[
-                        'Customer requested',
-                        'Out of stock',
-                        'Payment not verified',
-                        'Duplicate order',
-                        'Address issue',
-                      ].map((r) => (
-                        <button
-                          key={r}
-                          type="button"
-                          onClick={() => setNoteText(r)}
-                          className="text-[10px] px-2.5 py-1 rounded-full border border-border hover:border-brand-accent hover:text-brand-accent transition"
-                        >
+                      {['Customer requested', 'Out of stock', 'Payment not verified', 'Duplicate order', 'Address issue'].map((r) => (
+                        <button key={r} type="button" onClick={() => setNoteText(r)}
+                          className="text-[10px] px-2.5 py-1 rounded-full border border-border hover:border-brand-accent hover:text-brand-accent transition">
+                          {r}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  {noteOpen.status === 'out_for_delivery' && (
+                    <div className="flex flex-wrap gap-1.5 mt-2">
+                      {['Rider dispatched', 'Reaching soon', 'Attempting delivery'].map((r) => (
+                        <button key={r} type="button" onClick={() => setNoteText(r)}
+                          className="text-[10px] px-2.5 py-1 rounded-full border border-border hover:border-brand-accent hover:text-brand-accent transition">
                           {r}
                         </button>
                       ))}
@@ -344,7 +344,7 @@ Total: Rs ${order.total.toLocaleString()}</pre>
                     </button>
                     <button onClick={submitStatus} disabled={noteBusy}
                       className="flex-1 py-2.5 rounded-lg bg-brand-accent text-white font-semibold text-sm hover:bg-[#e55a2b] transition disabled:opacity-50 flex items-center justify-center gap-1.5">
-                      {noteBusy ? <><Loader2 size={13} className="animate-spin" /> Saving...</> : <><Send size={13} /> Confirm</>}
+                      {noteBusy ? <><Loader2 size={13} className="animate-spin" /> Saving...</> : <><SendIcon size={13} /> Confirm</>}
                     </button>
                   </div>
                 </>
@@ -354,7 +354,6 @@ Total: Rs ${order.total.toLocaleString()}</pre>
         </div>
       )}
 
-      {/* QR MODAL */}
       {activeQR && (
         <div className="fixed inset-0 bg-black/80 z-[3000] flex items-center justify-center p-4" onClick={() => setActiveQR(null)}>
           <div onClick={(e) => e.stopPropagation()} className="bg-white rounded-3xl p-8 max-w-[500px] w-full text-center relative">
