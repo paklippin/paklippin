@@ -43,6 +43,7 @@ export type Order = {
   items: { name: string; quantity: number; price: number }[];
   customer?: { name: string; email?: string; phone: string; address: string; city: string; notes?: string };
   payment?: { method: string; txnId: string; amount: number };
+  notes?: { text: string; status: string; by: string; at: string }[];
 };
 
 function normalize(o: any): Order {
@@ -54,6 +55,7 @@ function normalize(o: any): Order {
     items:  Array.isArray(o.items) ? o.items : [],
     customer: o.customer,
     payment:  o.payment,
+    notes:  Array.isArray(o.notes) ? o.notes : [],
   };
 }
 
@@ -128,7 +130,7 @@ export async function fetchOrders(email?: string): Promise<Order[]> {
   });
 }
 
-export async function updateOrderStatus(id: string, status: string): Promise<boolean> {
+export async function updateOrderStatus(id: string, status: string, note?: string, by?: string): Promise<boolean> {
   // Local update
   try {
     const raw = localStorage.getItem('user_orders');

@@ -2,9 +2,11 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { AccountShell } from '@/components/account/AccountShell';
+import OrderActions from '@/components/account/OrderActions';
+import OrderNotes from '@/components/account/OrderNotes';
 import { readUser, writeUser, fetchOrders, type Order, type StoredUser } from '@/lib/user';
 
-const NON_REVENUE_STATUSES = ['cancelled', 'refunded'];
+const NON_REVENUE_STATUSES = ['cancelled', 'refused', 'returned', 'refunded'];
 const isRevenueOrder = (o: Order) => !NON_REVENUE_STATUSES.includes((o.status || '').toLowerCase());
 
 export default function AccountPage() {
@@ -22,14 +24,17 @@ export default function AccountPage() {
     return () => clearInterval(id);
   }, []);
 
+  const reload = () => {
+    if (!user?.email) { setOrders([]); return; }
+    fetchOrders(user.email).then(setOrders);
+  };
+
   useEffect(() => {
     if (!user?.email) { setOrders([]); return; }
-    let alive = true;
-    const load = () => fetchOrders(user.email).then((list) => { if (alive) setOrders(list); });
-    load();
-    const id = setInterval(load, 5000);
-    window.addEventListener('storage', load);
-    return () => { alive = false; clearInterval(id); window.removeEventListener('storage', load); };
+    reload();
+    const id = setInterval(reload, 5000);
+    window.addEventListener('storage', reload);
+    return () => { clearInterval(id); window.removeEventListener('storage', reload); };
   }, [user?.email]);
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -60,19 +65,19 @@ export default function AccountPage() {
           </p>
           <form onSubmit={handleSubmit} className="space-y-4">
             {mode === 'register' && (
-              <input type="text" placeholder="Full name" value={form.name}
+              <input id="reg-name" name="name" autoComplete="name" type="text" placeholder="Full name" value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
                 className="w-full px-4 py-3 rounded-xl border-2 border-border focus:border-brand-accent outline-none text-sm transition" />
             )}
-            <input type="email" placeholder="Email" value={form.email}
+            <input id="reg-email" name="email" autoComplete="email" type="email" placeholder="Email" value={form.email}
               onChange={(e) => setForm({ ...form, email: e.target.value })}
               className="w-full px-4 py-3 rounded-xl border-2 border-border focus:border-brand-accent outline-none text-sm transition" />
             {mode === 'register' && (
-              <input type="tel" placeholder="Phone (optional)" value={form.phone}
+              <input id="reg-phone" name="phone" autoComplete="tel" type="tel" placeholder="Phone (optional)" value={form.phone}
                 onChange={(e) => setForm({ ...form, phone: e.target.value })}
                 className="w-full px-4 py-3 rounded-xl border-2 border-border focus:border-brand-accent outline-none text-sm transition" />
             )}
-            <input type="password" placeholder="Password" value={form.password}
+            <input id="reg-password" name="password" autoComplete={mode === 'login' ? 'current-password' : 'new-password'} type="password" placeholder="Password" value={form.password}
               onChange={(e) => setForm({ ...form, password: e.target.value })}
               className="w-full px-4 py-3 rounded-xl border-2 border-border focus:border-brand-accent outline-none text-sm transition" />
             {error && <p className="text-sm text-red-500 text-center">{error}</p>}
@@ -93,16 +98,11 @@ export default function AccountPage() {
   }
 
   const totalOrders = orders.length;
-
-  // ✅ Total Spent EXCLUDES cancelled orders
   const totalSpent = orders.filter(isRevenueOrder).reduce((s, o) => s + o.total, 0);
-
   const inTransit = orders.filter((o) => {
     const s = (o.status || '').toLowerCase();
-    return s === 'processing' || s === 'shipped' || s === 'out for delivery' || s === 'intransit';
+    return s === 'processing' || s === 'shipped' || s === 'out for delivery';
   }).length;
-
-  const cancelledCount = orders.filter((o) => !isRevenueOrder(o)).length;
 
   return (
     <AccountShell user={user}>
@@ -111,7 +111,7 @@ export default function AccountPage() {
         <p className="text-text-secondary text-sm">Your account snapshot</p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-10">
         <div className="bg-orange-50 border border-orange-100 rounded-2xl p-6 text-center">
           <div className="text-3xl font-bold text-brand-accent">{totalOrders}</div>
           <div className="text-xs uppercase tracking-wider text-text-secondary mt-1 font-semibold">Total Orders</div>
@@ -119,19 +119,13 @@ export default function AccountPage() {
         <div className="bg-orange-50 border border-orange-100 rounded-2xl p-6 text-center">
           <div className="text-3xl font-bold text-brand-accent">PKR {totalSpent.toLocaleString()}</div>
           <div className="text-xs uppercase tracking-wider text-text-secondary mt-1 font-semibold">Total Spent</div>
-          <div className="text-[10px] text-text-secondary mt-1">Excludes cancelled</div>
+          <div className="text-[10px] text-text-secondary mt-1">Excludes cancelled/refunded</div>
         </div>
         <div className="bg-orange-50 border border-orange-100 rounded-2xl p-6 text-center">
           <div className="text-3xl font-bold text-brand-accent">{inTransit}</div>
           <div className="text-xs uppercase tracking-wider text-text-secondary mt-1 font-semibold">In Transit</div>
         </div>
       </div>
-
-      {cancelledCount > 0 && (
-        <div className="bg-red-50 border border-red-100 rounded-xl px-4 py-3 mb-6 text-sm text-red-700">
-          <strong>{cancelledCount}</strong> cancelled order{cancelledCount !== 1 ? 's' : ''} — not counted in Total Spent
-        </div>
-      )}
 
       <div>
         <h2 className="text-xl font-bold mb-4">Recent Orders</h2>
@@ -155,25 +149,40 @@ export default function AccountPage() {
                       )}
                     </div>
                     <span className={`px-2.5 py-1 rounded-full text-[10px] font-semibold uppercase whitespace-nowrap ${
-                      (o.status || '').toLowerCase() === 'delivered' ? 'bg-green-100 text-green-700' :
-                      (o.status || '').toLowerCase() === 'cancelled' ? 'bg-red-100 text-red-700' :
-                      (o.status || '').toLowerCase() === 'shipped'   ? 'bg-blue-100 text-blue-700' :
+                      (o.status || '').toLowerCase() === 'delivered'  ? 'bg-green-100 text-green-700' :
+                      (o.status || '').toLowerCase() === 'cancelled'  ? 'bg-red-100 text-red-700' :
+                      (o.status || '').toLowerCase() === 'refused'    ? 'bg-orange-100 text-orange-700' :
+                      (o.status || '').toLowerCase() === 'returned'   ? 'bg-blue-100 text-blue-700' :
+                      (o.status || '').toLowerCase() === 'refunded'   ? 'bg-purple-100 text-purple-700' :
+                      (o.status || '').toLowerCase() === 'shipped'    ? 'bg-blue-100 text-blue-700' :
                       'bg-orange-100 text-orange-700'
                     }`}>
                       {o.status || 'processing'}
                     </span>
                   </div>
+
                   {o.items.length > 0 && (
                     <div className={`text-sm mb-2 ${cancelled ? 'text-text-secondary line-through' : 'text-text-secondary'}`}>
                       {o.items.map((i) => `${i.name} ×${i.quantity}`).join(', ')}
                     </div>
                   )}
+
                   <div className="flex justify-between items-center pt-2 border-t border-border">
                     <span className="text-xs text-text-secondary">Total:</span>
                     <span className={`font-bold ${cancelled ? 'text-text-secondary line-through' : 'text-brand-accent'}`}>
                       Rs {o.total.toLocaleString()}
                     </span>
                   </div>
+
+                  {/* Notes timeline */}
+                  <OrderNotes notes={(o as any).notes || []} />
+
+                  {/* Actions */}
+                  <OrderActions
+                    orderId={o.id}
+                    currentStatus={o.status || 'processing'}
+                    onUpdate={reload}
+                  />
                 </div>
               );
             })}
