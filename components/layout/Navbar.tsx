@@ -1,7 +1,8 @@
 'use client';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { ShoppingCart, Heart, User, LogOut, Menu } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { ShoppingCart, Heart, User, LogOut, Menu, Search } from 'lucide-react';
 import { useUI } from '@/lib/ui-store';
 import MobileNav from './MobileNav';
 
@@ -12,7 +13,9 @@ export default function Navbar() {
   const [user, setUser] = useState<UserInfo>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [search, setSearch] = useState('');
   const openCart = useUI((s) => s.openCart);
+  const router = useRouter();
 
   useEffect(() => {
     const read = () => {
@@ -38,7 +41,7 @@ export default function Navbar() {
           const data = JSON.parse(raw);
           const u = data?.state?.user || data?.user || data;
           if (u && (u.email || u.name)) {
-            setUser({ name: u.name || u.fullName || 'User', email: u.email || '' });
+            setUser({ name: u.name || 'User', email: u.email || '' });
             return;
           }
         }
@@ -55,10 +58,16 @@ export default function Navbar() {
   }, []);
 
   const handleLogout = () => {
-    ['auth-storage', 'paklippin-auth', 'auth', 'user', 'user_email', 'user_name'].forEach((k) => localStorage.removeItem(k));
+    ['auth-storage', 'paklippin-auth', 'auth', 'user', 'user_email', 'user_name', 'user_phone'].forEach((k) => localStorage.removeItem(k));
     setUser(null);
     setMenuOpen(false);
     window.location.href = '/';
+  };
+
+  const submitSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    const q = search.trim();
+    if (q) router.push(`/search?q=${encodeURIComponent(q)}`);
   };
 
   const navLinks = [
@@ -78,42 +87,35 @@ export default function Navbar() {
     <>
       <header className="sticky top-0 z-[1000] bg-white border-b border-border shadow">
         <div className="max-w-[1400px] mx-auto flex items-center justify-between px-[5%] py-3 sm:py-4 gap-3 sm:gap-4">
-          {/* Hamburger (mobile only) */}
-          <button
-            onClick={() => setMobileOpen(true)}
-            className="md:hidden text-text-secondary hover:text-brand-accent transition shrink-0"
-            aria-label="Open menu"
-          >
+          <button onClick={() => setMobileOpen(true)} className="md:hidden text-text-secondary hover:text-brand-accent transition shrink-0" aria-label="Open menu">
             <Menu size={22} />
           </button>
 
-          {/* Logo */}
           <Link href="/" className="flex items-center gap-2 font-bold text-xl sm:text-2xl text-brand-accent shrink-0">
             <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center text-white font-bold text-base sm:text-lg"
                  style={{ background: 'linear-gradient(135deg, #FF6B35, #ff8c5a)' }}>P</div>
             <span className="hidden xs:inline sm:inline">PAKLIPPIN</span>
           </Link>
 
-          {/* Search (desktop) */}
-          <div className="hidden md:block flex-1 max-w-[500px] mx-6">
+          <form onSubmit={submitSearch} className="hidden md:flex flex-1 max-w-[500px] mx-6 relative">
+            <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-text-secondary pointer-events-none" />
             <input
               id="navbar-search"
               name="search"
               type="search"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
               placeholder="Search products, categories, brands..."
               autoComplete="off"
-              className="w-full px-5 py-3 rounded-full border-2 border-border focus:border-brand-accent focus:outline-none transition text-sm"
+              className="w-full pl-11 pr-4 py-3 rounded-full border-2 border-border focus:border-brand-accent focus:outline-none transition text-sm"
             />
-          </div>
+          </form>
 
-          {/* Actions */}
           <div className="flex items-center gap-3 sm:gap-4 shrink-0">
             {user ? (
               <div className="relative">
-                <button
-                  onClick={() => setMenuOpen((v) => !v)}
-                  className="flex items-center gap-2 px-3 sm:px-4 py-2 rounded-full border-2 border-brand-accent text-brand-accent hover:bg-brand-accent hover:text-white transition text-sm font-semibold"
-                >
+                <button onClick={() => setMenuOpen((v) => !v)}
+                  className="flex items-center gap-2 px-3 sm:px-4 py-2 rounded-full border-2 border-brand-accent text-brand-accent hover:bg-brand-accent hover:text-white transition text-sm font-semibold">
                   <div className="w-6 h-6 rounded-full bg-brand-accent text-white flex items-center justify-center text-[11px] font-bold">
                     {firstName.charAt(0).toUpperCase()}
                   </div>
@@ -136,16 +138,13 @@ export default function Navbar() {
                 )}
               </div>
             ) : (
-              <Link
-                href="/account"
-                className="flex items-center gap-2 px-3 sm:px-4 py-2 rounded-full border-2 border-border text-text-primary hover:border-brand-accent hover:text-brand-accent transition text-sm font-semibold"
-              >
+              <Link href="/account" className="flex items-center gap-2 px-3 sm:px-4 py-2 rounded-full border-2 border-border text-text-primary hover:border-brand-accent hover:text-brand-accent transition text-sm font-semibold">
                 <User size={16} />
                 <span className="hidden sm:inline">Login / Register</span>
               </Link>
             )}
 
-            <Link href="/account" className="text-text-secondary hover:text-brand-accent transition" aria-label="Wishlist">
+            <Link href="/wishlist" className="text-text-secondary hover:text-brand-accent transition" aria-label="Wishlist">
               <Heart size={22} />
             </Link>
 
@@ -158,7 +157,6 @@ export default function Navbar() {
           </div>
         </div>
 
-        {/* Nav row (desktop only) */}
         <nav className="bg-brand-secondary hidden md:block">
           <ul className="max-w-[1400px] mx-auto px-[5%] flex gap-10 overflow-x-auto">
             {navLinks.map((l) => (

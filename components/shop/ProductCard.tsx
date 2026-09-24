@@ -1,4 +1,5 @@
 'use client';
+import { useEffect, useState } from 'react';
 import ProductBox3D from '@/components/3d/ProductBox3D';
 
 export type Product = {
@@ -27,7 +28,27 @@ type Props = {
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://shop.paklippin.com';
 
 export default function ProductCard({ product, onOpen, onAdd, onWish }: Props) {
+  const [wished, setWished] = useState(false);
   const hasImage = product.imageUrl && product.imageUrl.trim();
+
+  useEffect(() => {
+    const check = () => {
+      try {
+        const raw = localStorage.getItem('wishlist');
+        const ids = raw ? JSON.parse(raw) : [];
+        setWished(Array.isArray(ids) && ids.map(Number).includes(product.id));
+      } catch { setWished(false); }
+    };
+    check();
+    window.addEventListener('storage', check);
+    return () => window.removeEventListener('storage', check);
+  }, [product.id]);
+
+  const handleWish = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onWish(product.id);
+    setWished((v) => !v);
+  };
 
   return (
     <div
@@ -53,11 +74,13 @@ export default function ProductCard({ product, onOpen, onAdd, onWish }: Props) {
         )}
 
         <button
-          onClick={(e) => { e.stopPropagation(); onWish(product.id); }}
-          className="absolute top-4 right-4 w-9 h-9 bg-white rounded-full flex items-center justify-center shadow hover:bg-[#ff4757] hover:text-white transition text-sm"
-          aria-label="Add to wishlist"
+          onClick={handleWish}
+          className={`absolute top-4 right-4 w-9 h-9 rounded-full flex items-center justify-center shadow transition text-sm ${
+            wished ? 'bg-[#ff4757] text-white' : 'bg-white hover:bg-[#ff4757] hover:text-white'
+          }`}
+          aria-label={wished ? 'Remove from wishlist' : 'Add to wishlist'}
         >
-          ❤️
+          {wished ? '❤️' : '🤍'}
         </button>
       </div>
 

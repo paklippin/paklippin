@@ -1,4 +1,5 @@
 'use client';
+import { Suspense } from 'react';
 import ProductGrid from '@/components/shop/ProductGrid';
 
 export default function ShopPage() {
@@ -8,7 +9,9 @@ export default function ShopPage() {
         <h1 className="text-4xl font-bold mb-2">All Products</h1>
         <p className="text-text-secondary">Browse our full catalogue</p>
       </div>
-      <ProductGrid />
+      <Suspense fallback={<p className="text-center text-text-secondary text-sm">Loading...</p>}>
+        <ProductGrid />
+      </Suspense>
     </div>
   );
 }

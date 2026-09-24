@@ -1,10 +1,13 @@
+'use client';
+import Link from 'next/link';
+
 const categories = [
-  { icon: '📱', name: 'Electronics', count: 248 },
-  { icon: '👕', name: 'Clothing', count: 512 },
-  { icon: '🏠', name: 'Home & Living', count: 189 },
-  { icon: '⚽', name: 'Sports', count: 156 },
-  { icon: '💄', name: 'Beauty', count: 203 },
-  { icon: '📚', name: 'Books', count: 98 },
+  { icon: '📱', name: 'Electronics', count: 248, slug: 'Electronics' },
+  { icon: '👕', name: 'Clothing', count: 512, slug: 'Clothing' },
+  { icon: '🏠', name: 'Home & Living', count: 189, slug: 'Home & Living' },
+  { icon: '⚽', name: 'Sports', count: 156, slug: 'Sports' },
+  { icon: '💄', name: 'Beauty', count: 203, slug: 'Beauty' },
+  { icon: '📚', name: 'Books', count: 98, slug: 'Books' },
 ];
 
 export default function CategoryGrid() {
@@ -17,8 +20,9 @@ export default function CategoryGrid() {
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-6">
           {categories.map((c) => (
-            <div
+            <Link
               key={c.name}
+              href={`/shop?category=${encodeURIComponent(c.slug)}`}
               className="bg-white rounded-2xl p-7 text-center shadow cursor-pointer transition-all duration-300 hover:-translate-y-1 hover:shadow-hover"
             >
               <div
@@ -29,7 +33,7 @@ export default function CategoryGrid() {
               </div>
               <div className="font-semibold text-base mb-1">{c.name}</div>
               <div className="text-xs text-text-secondary">{c.count} Products</div>
-            </div>
+            </Link>
           ))}
         </div>
       </div>
