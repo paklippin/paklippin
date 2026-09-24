@@ -1,6 +1,6 @@
 import type { Product } from '@/components/shop/ProductCard';
 
-const PRODUCTS_BASE = process.env.NEXT_PUBLIC_PRODUCTS_URL || 'https://paklippin.com/api';
+const LIVE_API = process.env.NEXT_PUBLIC_PRODUCTS_URL || 'https://paklippin.com/api';
 
 export const FALLBACK_PRODUCTS: Product[] = [
   { id: 1, name: 'Wireless Headphones', category: 'Electronics', price: 2500, originalPrice: 3000, rating: 4.5, reviews: 128, badge: 'Sale', emoji: '🎧' },
@@ -14,48 +14,57 @@ export const FALLBACK_PRODUCTS: Product[] = [
 ];
 
 function normalize(raw: any, idx: number): Product {
-  const price         = Number(raw.price ?? raw.sale_price ?? raw.current_price ?? 0);
-  const originalPrice = Number(raw.originalPrice ?? raw.original_price ?? raw.compare_price ?? raw.mrp ?? price);
+  const price         = Number(raw.price ?? raw.sale_price ?? 0);
+  const originalPrice = Number(raw.originalPrice ?? raw.old_price ?? raw.compare_price ?? price);
   return {
     id:            Number(raw.id ?? idx + 1),
-    name:          String(raw.name ?? raw.title ?? 'Unnamed Product'),
-    category:      String(raw.category ?? raw.category_name ?? 'General'),
+    name:          String(raw.name ?? 'Unnamed'),
+    category:      String(raw.category ?? 'General'),
     price,
     originalPrice: originalPrice > price ? originalPrice : price,
-    rating:        Number(raw.rating ?? raw.avg_rating ?? 4.5),
-    reviews:       Number(raw.reviews ?? raw.review_count ?? 0),
-    badge:         String(raw.badge ?? raw.tag ?? ''),
-    emoji:         String(raw.emoji ?? raw.icon ?? '📦'),
+    rating:        Number(raw.rating ?? 4.5),
+    reviews:       Number(raw.reviews ?? 0),
+    badge:         String(raw.badge ?? ''),
+    emoji:         String(raw.emoji ?? '📦'),
+    imageUrl:      String(raw.imageUrl ?? raw.image_url ?? ''),
   };
 }
 
-// Use Next.js proxy — avoids CORS + QUIC issues from the browser
+// 3-tier fallback: D1 → live API → hardcoded
 export async function fetchProducts(): Promise<Product[]> {
+  // Tier 1: our own proxy (reads from D1)
   try {
     const res = await fetch('/api/products', { cache: 'no-store' });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const json = await res.json();
-    const list: any[] = Array.isArray(json) ? json : (json.products ?? json.data ?? []);
-    if (!list.length) throw new Error('Empty response');
-    return list.map(normalize);
-  } catch (err) {
-    console.warn('[api] Falling back to local products:', (err as Error).message);
-    return FALLBACK_PRODUCTS;
+    if (res.ok) {
+      const json = await res.json();
+      const list: any[] = Array.isArray(json) ? json : (json.products ?? []);
+      if (list.length) {
+        console.log('[api] Products from D1:', list.length);
+        return list.map(normalize);
+      }
+    }
+  } catch (e) {
+    console.warn('[api] D1 fetch failed:', (e as Error).message);
   }
+
+  // Tier 2: live API (paklippin.com)
+  try {
+    const res = await fetch(`${LIVE_API}/products`, { cache: 'no-store' });
+    if (res.ok) {
+      const json = await res.json();
+      const list: any[] = Array.isArray(json) ? json : (json.products ?? []);
+      if (list.length) {
+        console.log('[api] Products from LIVE:', list.length);
+        return list.map(normalize);
+      }
+    }
+  } catch (e) {
+    console.warn('[api] Live API failed:', (e as Error).message);
+  }
+
+  // Tier 3: hardcoded fallback
+  console.log('[api] Using hardcoded products');
+  return FALLBACK_PRODUCTS;
 }
 
-// Export for server-side use if needed
-export async function fetchProductsDirect(): Promise<Product[]> {
-  try {
-    const res = await fetch(`${PRODUCTS_BASE}/products`, {
-      headers: { Accept: 'application/json' },
-      next: { revalidate: 60 },
-    });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const json = await res.json();
-    const list: any[] = Array.isArray(json) ? json : (json.products ?? json.data ?? []);
-    return list.map(normalize);
-  } catch {
-    return FALLBACK_PRODUCTS;
-  }
-}
+export const getProducts = fetchProducts;

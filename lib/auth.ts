@@ -1,56 +1,115 @@
 'use client';
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
 
-export type User = {
-  id: string;
-  name: string;
-  email: string;
-  phone?: string;
-};
+type User = { name: string; email: string; phone?: string };
 
-type AuthStore = {
+type AuthState = {
   user: User | null;
-  login: (email: string, password: string) => { ok: boolean; error?: string };
-  register: (name: string, email: string, password: string) => { ok: boolean; error?: string };
+  loading: boolean;
+  login: (email: string, password: string) => Promise<{ ok: boolean; error?: string }>;
+  register: (data: { name: string; email: string; phone: string; password: string }) => Promise<{ ok: boolean; error?: string }>;
   logout: () => void;
+  loadFromStorage: () => void;
 };
 
-const KEY = 'paklippin-users';
-
-function loadUsers(): Array<User & { password: string }> {
-  if (typeof window === 'undefined') return [];
-  try { return JSON.parse(localStorage.getItem(KEY) || '[]'); } catch { return []; }
+// Save user to localStorage (works offline)
+function saveLocal(user: User) {
+  try {
+    localStorage.setItem('auth-storage', JSON.stringify({ state: { user }, version: 0 }));
+    localStorage.setItem('user_email', user.email);
+    localStorage.setItem('user_name', user.name);
+    if (user.phone) localStorage.setItem('user_phone', user.phone);
+  } catch {}
 }
-function saveUsers(users: Array<User & { password: string }>) {
-  localStorage.setItem(KEY, JSON.stringify(users));
+
+function readLocal(): User | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    for (const key of ['auth-storage', 'paklippin-auth', 'auth', 'user']) {
+      const raw = localStorage.getItem(key);
+      if (!raw) continue;
+      const data = JSON.parse(raw);
+      const u = data?.state?.user || data?.user || data;
+      if (u && (u.email || u.name)) {
+        return { name: u.name || 'User', email: u.email || '', phone: u.phone || '' };
+      }
+    }
+    const email = localStorage.getItem('user_email');
+    const name  = localStorage.getItem('user_name');
+    const phone = localStorage.getItem('user_phone') || '';
+    if (email || name) return { name: name || 'User', email: email || '', phone };
+  } catch {}
+  return null;
 }
 
-export const useAuth = create<AuthStore>()(
-  persist(
-    (set) => ({
-      user: null,
-      login: (email, password) => {
-        const e = email.trim().toLowerCase();
-        const users = loadUsers();
-        const found = users.find((u) => u.email === e && u.password === password);
-        if (!found) return { ok: false, error: 'Invalid email or password.' };
-        set({ user: { id: found.id, name: found.name, email: found.email, phone: found.phone } });
-        return { ok: true };
-      },
-      register: (name, email, password) => {
-        const e = email.trim().toLowerCase();
-        if (password.length < 6) return { ok: false, error: 'Password must be 6+ characters.' };
-        const users = loadUsers();
-        if (users.some((u) => u.email === e)) return { ok: false, error: 'Email already registered.' };
-        const user = { id: 'u_' + Date.now().toString(36), name: name.trim(), email: e, password };
-        users.push(user);
-        saveUsers(users);
-        set({ user: { id: user.id, name: user.name, email: user.email } });
-        return { ok: true };
-      },
-      logout: () => set({ user: null }),
-    }),
-    { name: 'paklippin-auth' }
-  )
-);
+// Fire-and-forget sync to D1 (never blocks, never throws)
+function syncToD1(user: User, password: string) {
+  fetch('/api/auth/sync', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ...user, password }),
+  }).catch(() => {});
+}
+
+export const useAuth = create<AuthState>((set) => ({
+  user: null,
+  loading: true,
+
+  loadFromStorage: () => {
+    const u = readLocal();
+    set({ user: u, loading: false });
+  },
+
+  login: async (email, password) => {
+    if (!email || !password) return { ok: false, error: 'Email and password required' };
+    // Try D1 first
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.ok && data.user) {
+          saveLocal(data.user);
+          set({ user: data.user, loading: false });
+          return { ok: true };
+        }
+        if (data.error) return { ok: false, error: data.error };
+      }
+    } catch {}
+
+    // Fallback: localStorage trust (for users who registered before D1 was ready)
+    const existing = readLocal();
+    if (existing && existing.email === email) {
+      set({ user: existing, loading: false });
+      return { ok: true };
+    }
+
+    return { ok: false, error: 'Account not found. Please register first.' };
+  },
+
+  register: async ({ name, email, phone, password }) => {
+    if (!name || !email || !password) return { ok: false, error: 'All fields required' };
+
+    const user: User = { name, email, phone };
+    saveLocal(user);           // save locally first (always works)
+    set({ user, loading: false });
+
+    // Sync to D1 in background
+    fetch('/api/auth/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, email, phone, password }),
+    }).catch(() => {});
+
+    return { ok: true };
+  },
+
+  logout: () => {
+    ['auth-storage', 'paklippin-auth', 'auth', 'user', 'user_email', 'user_name', 'user_phone']
+      .forEach((k) => { try { localStorage.removeItem(k); } catch {} });
+    set({ user: null });
+  },
+}));
