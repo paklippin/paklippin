@@ -12,7 +12,6 @@ export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const openCart = useUI((s) => s.openCart);
 
-  // Read cart count
   useEffect(() => {
     const read = () => {
       try {
@@ -28,13 +27,10 @@ export default function Navbar() {
     return () => { clearInterval(id); window.removeEventListener('storage', read); };
   }, []);
 
-  // Read auth state — tries every known key
   useEffect(() => {
     const readUser = () => {
       try {
-        // 1. Try the auth store key first
-        const authKeys = ['auth-storage', 'paklippin-auth', 'auth', 'user'];
-        for (const key of authKeys) {
+        for (const key of ['auth-storage', 'paklippin-auth', 'auth', 'user']) {
           const raw = localStorage.getItem(key);
           if (!raw) continue;
           const data = JSON.parse(raw);
@@ -44,13 +40,9 @@ export default function Navbar() {
             return;
           }
         }
-        // 2. Standalone keys
         const email = localStorage.getItem('user_email');
         const name  = localStorage.getItem('user_name');
-        if (email || name) {
-          setUser({ name: name || 'User', email: email || '' });
-          return;
-        }
+        if (email || name) { setUser({ name: name || 'User', email: email || '' }); return; }
         setUser(null);
       } catch { setUser(null); }
     };
@@ -61,9 +53,7 @@ export default function Navbar() {
   }, []);
 
   const handleLogout = () => {
-    try {
-      ['auth-storage', 'paklippin-auth', 'auth', 'user', 'user_email', 'user_name'].forEach((k) => localStorage.removeItem(k));
-    } catch {}
+    ['auth-storage', 'paklippin-auth', 'auth', 'user', 'user_email', 'user_name'].forEach((k) => localStorage.removeItem(k));
     setUser(null);
     setMenuOpen(false);
     window.location.href = '/';
@@ -85,29 +75,25 @@ export default function Navbar() {
   return (
     <header className="sticky top-0 z-[1000] bg-white border-b border-border shadow">
       <div className="max-w-[1400px] mx-auto flex items-center justify-between px-[5%] py-4 gap-4">
-        {/* Logo */}
         <Link href="/" className="flex items-center gap-2.5 font-bold text-2xl text-brand-accent shrink-0">
-          <div
-            className="w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold text-lg"
-            style={{ background: 'linear-gradient(135deg, #FF6B35, #ff8c5a)' }}
-          >P</div>
+          <div className="w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold text-lg"
+               style={{ background: 'linear-gradient(135deg, #FF6B35, #ff8c5a)' }}>P</div>
           PAKLIPPIN
         </Link>
 
-        {/* Search */}
         <div className="hidden md:block flex-1 max-w-[500px] mx-6">
           <input
-            type="text"
+            id="navbar-search"
+            name="search"
+            type="search"
             placeholder="Search products, categories, brands..."
+            autoComplete="off"
             className="w-full px-5 py-3 rounded-full border-2 border-border focus:border-brand-accent focus:outline-none transition text-sm"
           />
         </div>
 
-        {/* Actions */}
         <div className="flex items-center gap-3 sm:gap-4">
-
           {user ? (
-            /* LOGGED IN — user pill with dropdown */
             <div className="relative">
               <button
                 onClick={() => setMenuOpen((v) => !v)}
@@ -118,7 +104,6 @@ export default function Navbar() {
                 </div>
                 <span className="hidden sm:inline">Hi, {firstName}</span>
               </button>
-
               {menuOpen && (
                 <>
                   <div className="fixed inset-0 z-[90]" onClick={() => setMenuOpen(false)} />
@@ -127,80 +112,37 @@ export default function Navbar() {
                       <div className="text-sm font-semibold text-text-primary truncate">{user.name}</div>
                       <div className="text-xs text-text-secondary truncate">{user.email}</div>
                     </div>
-                    <Link
-                      href="/account"
-                      onClick={() => setMenuOpen(false)}
-                      className="flex items-center gap-2 px-4 py-2.5 text-sm text-text-primary hover:bg-brand-secondary transition"
-                    >
-                      <User size={15} /> My Account
-                    </Link>
-                    <Link
-                      href="/account/orders"
-                      onClick={() => setMenuOpen(false)}
-                      className="flex items-center gap-2 px-4 py-2.5 text-sm text-text-primary hover:bg-brand-secondary transition"
-                    >
-                      📦 My Orders
-                    </Link>
-                    <Link
-                      href="/account/track"
-                      onClick={() => setMenuOpen(false)}
-                      className="flex items-center gap-2 px-4 py-2.5 text-sm text-text-primary hover:bg-brand-secondary transition"
-                    >
-                      🚚 Track Order
-                    </Link>
-                    <button
-                      onClick={handleLogout}
-                      className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 transition border-t border-border mt-1"
-                    >
-                      <LogOut size={15} /> Logout
-                    </button>
+                    <Link href="/account" onClick={() => setMenuOpen(false)} className="flex items-center gap-2 px-4 py-2.5 text-sm hover:bg-brand-secondary transition"><User size={15}/> My Account</Link>
+                    <Link href="/account/orders" onClick={() => setMenuOpen(false)} className="flex items-center gap-2 px-4 py-2.5 text-sm hover:bg-brand-secondary transition">📦 My Orders</Link>
+                    <Link href="/account/track" onClick={() => setMenuOpen(false)} className="flex items-center gap-2 px-4 py-2.5 text-sm hover:bg-brand-secondary transition">🚚 Track Order</Link>
+                    <button onClick={handleLogout} className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 transition border-t border-border mt-1"><LogOut size={15}/> Logout</button>
                   </div>
                 </>
               )}
             </div>
           ) : (
-            /* NOT LOGGED IN — Login / Register */
-            <Link
-              href="/account"
-              className="flex items-center gap-2 px-4 py-2 rounded-full border-2 border-border text-text-primary hover:border-brand-accent hover:text-brand-accent transition text-sm font-semibold"
-            >
+            <Link href="/account" className="flex items-center gap-2 px-4 py-2 rounded-full border-2 border-border text-text-primary hover:border-brand-accent hover:text-brand-accent transition text-sm font-semibold">
               <User size={16} />
               <span className="hidden sm:inline">Login / Register</span>
             </Link>
           )}
 
-          {/* Wishlist */}
-          <Link href="/account" className="relative text-text-secondary hover:text-brand-accent transition" aria-label="Wishlist">
-            <Heart size={22} />
-          </Link>
+          <Link href="/account" className="relative text-text-secondary hover:text-brand-accent transition" aria-label="Wishlist"><Heart size={22} /></Link>
 
-          {/* Cart */}
-          <button
-            onClick={openCart}
-            className="relative text-text-secondary hover:text-brand-accent transition"
-            aria-label="Open cart"
-          >
+          <button onClick={openCart} className="relative text-text-secondary hover:text-brand-accent transition" aria-label="Open cart">
             <ShoppingCart size={22} />
             {cartCount > 0 && (
-              <span className="absolute -top-2 -right-2 bg-brand-accent text-white text-[10px] font-semibold w-[18px] h-[18px] rounded-full flex items-center justify-center">
-                {cartCount}
-              </span>
+              <span className="absolute -top-2 -right-2 bg-brand-accent text-white text-[10px] font-semibold w-[18px] h-[18px] rounded-full flex items-center justify-center">{cartCount}</span>
             )}
           </button>
         </div>
       </div>
 
-      {/* Nav bar */}
       <nav className="bg-brand-secondary hidden md:block">
         <ul className="max-w-[1400px] mx-auto px-[5%] flex gap-10 overflow-x-auto">
           {navLinks.map((l) => (
             <li key={l.label}>
-              <Link
-                href={l.href}
-                className="block py-4 text-sm font-medium text-text-secondary border-b-2 border-transparent hover:text-brand-accent hover:border-brand-accent transition whitespace-nowrap"
-              >
-                {l.label}
-              </Link>
+              <Link href={l.href} className="block py-4 text-sm font-medium text-text-secondary border-b-2 border-transparent hover:text-brand-accent hover:border-brand-accent transition whitespace-nowrap">{l.label}</Link>
             </li>
           ))}
         </ul>
