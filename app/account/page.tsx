@@ -4,6 +4,9 @@ import Link from 'next/link';
 import { AccountShell } from '@/components/account/AccountShell';
 import { readUser, writeUser, fetchOrders, type Order, type StoredUser } from '@/lib/user';
 
+const NON_REVENUE_STATUSES = ['cancelled', 'refunded'];
+const isRevenueOrder = (o: Order) => !NON_REVENUE_STATUSES.includes((o.status || '').toLowerCase());
+
 export default function AccountPage() {
   const [user, setUser]     = useState<StoredUser>(null);
   const [ready, setReady]   = useState(false);
@@ -90,11 +93,16 @@ export default function AccountPage() {
   }
 
   const totalOrders = orders.length;
-  const totalSpent  = orders.reduce((s, o) => s + o.total, 0);
-  const inTransit   = orders.filter((o) => {
+
+  // ✅ Total Spent EXCLUDES cancelled orders
+  const totalSpent = orders.filter(isRevenueOrder).reduce((s, o) => s + o.total, 0);
+
+  const inTransit = orders.filter((o) => {
     const s = (o.status || '').toLowerCase();
     return s === 'processing' || s === 'shipped' || s === 'out for delivery' || s === 'intransit';
   }).length;
+
+  const cancelledCount = orders.filter((o) => !isRevenueOrder(o)).length;
 
   return (
     <AccountShell user={user}>
@@ -103,7 +111,7 @@ export default function AccountPage() {
         <p className="text-text-secondary text-sm">Your account snapshot</p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-10">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
         <div className="bg-orange-50 border border-orange-100 rounded-2xl p-6 text-center">
           <div className="text-3xl font-bold text-brand-accent">{totalOrders}</div>
           <div className="text-xs uppercase tracking-wider text-text-secondary mt-1 font-semibold">Total Orders</div>
@@ -111,12 +119,19 @@ export default function AccountPage() {
         <div className="bg-orange-50 border border-orange-100 rounded-2xl p-6 text-center">
           <div className="text-3xl font-bold text-brand-accent">PKR {totalSpent.toLocaleString()}</div>
           <div className="text-xs uppercase tracking-wider text-text-secondary mt-1 font-semibold">Total Spent</div>
+          <div className="text-[10px] text-text-secondary mt-1">Excludes cancelled</div>
         </div>
         <div className="bg-orange-50 border border-orange-100 rounded-2xl p-6 text-center">
           <div className="text-3xl font-bold text-brand-accent">{inTransit}</div>
           <div className="text-xs uppercase tracking-wider text-text-secondary mt-1 font-semibold">In Transit</div>
         </div>
       </div>
+
+      {cancelledCount > 0 && (
+        <div className="bg-red-50 border border-red-100 rounded-xl px-4 py-3 mb-6 text-sm text-red-700">
+          <strong>{cancelledCount}</strong> cancelled order{cancelledCount !== 1 ? 's' : ''} — not counted in Total Spent
+        </div>
+      )}
 
       <div>
         <h2 className="text-xl font-bold mb-4">Recent Orders</h2>
@@ -126,32 +141,42 @@ export default function AccountPage() {
           </div>
         ) : (
           <div className="space-y-4">
-            {orders.slice(0, 5).map((o) => (
-              <div key={o.id} className="bg-white border border-border rounded-2xl p-5">
-                <div className="flex justify-between items-start gap-3 mb-2 flex-wrap">
-                  <div>
-                    <div className="font-bold text-base">{o.id}</div>
-                    {o.date && (
-                      <div className="text-xs text-text-secondary">
-                        {new Date(o.date).toLocaleString('en-PK')}
-                      </div>
-                    )}
+            {orders.slice(0, 5).map((o) => {
+              const cancelled = !isRevenueOrder(o);
+              return (
+                <div key={o.id} className="bg-white border border-border rounded-2xl p-5">
+                  <div className="flex justify-between items-start gap-3 mb-2 flex-wrap">
+                    <div>
+                      <div className="font-bold text-base">{o.id}</div>
+                      {o.date && (
+                        <div className="text-xs text-text-secondary">
+                          {new Date(o.date).toLocaleString('en-PK')}
+                        </div>
+                      )}
+                    </div>
+                    <span className={`px-2.5 py-1 rounded-full text-[10px] font-semibold uppercase whitespace-nowrap ${
+                      (o.status || '').toLowerCase() === 'delivered' ? 'bg-green-100 text-green-700' :
+                      (o.status || '').toLowerCase() === 'cancelled' ? 'bg-red-100 text-red-700' :
+                      (o.status || '').toLowerCase() === 'shipped'   ? 'bg-blue-100 text-blue-700' :
+                      'bg-orange-100 text-orange-700'
+                    }`}>
+                      {o.status || 'processing'}
+                    </span>
                   </div>
-                  <span className="px-2.5 py-1 rounded-full text-[10px] font-semibold bg-orange-100 text-orange-700 uppercase whitespace-nowrap">
-                    {o.status || 'processing'}
-                  </span>
-                </div>
-                {o.items.length > 0 && (
-                  <div className="text-sm text-text-secondary mb-2">
-                    {o.items.map((i) => `${i.name} ×${i.quantity}`).join(', ')}
+                  {o.items.length > 0 && (
+                    <div className={`text-sm mb-2 ${cancelled ? 'text-text-secondary line-through' : 'text-text-secondary'}`}>
+                      {o.items.map((i) => `${i.name} ×${i.quantity}`).join(', ')}
+                    </div>
+                  )}
+                  <div className="flex justify-between items-center pt-2 border-t border-border">
+                    <span className="text-xs text-text-secondary">Total:</span>
+                    <span className={`font-bold ${cancelled ? 'text-text-secondary line-through' : 'text-brand-accent'}`}>
+                      Rs {o.total.toLocaleString()}
+                    </span>
                   </div>
-                )}
-                <div className="flex justify-between items-center pt-2 border-t border-border">
-                  <span className="text-xs text-text-secondary">Total:</span>
-                  <span className="font-bold text-brand-accent">Rs {o.total.toLocaleString()}</span>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

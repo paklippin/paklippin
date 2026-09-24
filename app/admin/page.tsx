@@ -12,26 +12,27 @@ type Order = {
   customer?: { name?: string; email?: string; phone?: string; city?: string };
 };
 
+// Statuses that don't count toward revenue
+const NON_REVENUE_STATUSES = ['cancelled', 'refunded'];
+
+const isRevenueOrder = (o: Order) => !NON_REVENUE_STATUSES.includes((o.status || '').toLowerCase());
+
 export default function AdminDashboard() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const load = async () => {
+    try {
+      const res = await fetch('/api/admin/orders', { cache: 'no-store' });
+      const json = await res.json();
+      setOrders(Array.isArray(json.orders) ? json.orders : []);
+    } catch {}
+    setLoading(false);
+  };
+
   useEffect(() => {
-    (async () => {
-      try {
-        const res = await fetch('/api/admin/orders', { cache: 'no-store' });
-        const json = await res.json();
-        setOrders(Array.isArray(json.orders) ? json.orders : []);
-      } catch {}
-      setLoading(false);
-    })();
-    const id = setInterval(async () => {
-      try {
-        const res = await fetch('/api/admin/orders', { cache: 'no-store' });
-        const json = await res.json();
-        setOrders(Array.isArray(json.orders) ? json.orders : []);
-      } catch {}
-    }, 15000);
+    load();
+    const id = setInterval(load, 15000);
     return () => clearInterval(id);
   }, []);
 
@@ -39,19 +40,23 @@ export default function AdminDashboard() {
   today.setHours(0, 0, 0, 0);
 
   const totalOrders = orders.length;
-  const totalRevenue = orders.reduce((s, o) => s + (o.total || 0), 0);
+
+  // ✅ Revenue EXCLUDES cancelled/refunded
+  const revenueOrders = orders.filter(isRevenueOrder);
+  const totalRevenue = revenueOrders.reduce((s, o) => s + (o.total || 0), 0);
+
   const todaysOrders = orders.filter((o) => o.date && new Date(o.date) >= today);
   const pending = orders.filter((o) => (o.status || '').toLowerCase() === 'processing').length;
+  const cancelled = orders.filter((o) => NON_REVENUE_STATUSES.includes((o.status || '').toLowerCase())).length;
 
-  // Top products by quantity sold
+  // Top products by quantity sold — exclude cancelled
   const productMap = new Map<string, { name: string; quantity: number; revenue: number }>();
-  orders.forEach((o) => {
+  revenueOrders.forEach((o) => {
     o.items?.forEach((i) => {
-      const key = i.name;
-      const cur = productMap.get(key) || { name: i.name, quantity: 0, revenue: 0 };
+      const cur = productMap.get(i.name) || { name: i.name, quantity: 0, revenue: 0 };
       cur.quantity += i.quantity;
       cur.revenue += i.price * i.quantity;
-      productMap.set(key, cur);
+      productMap.set(i.name, cur);
     });
   });
   const topProducts = Array.from(productMap.values())
@@ -78,14 +83,21 @@ export default function AdminDashboard() {
           {/* STAT CARDS */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
             <StatCard icon={ShoppingBag} label="Total Orders" value={totalOrders} />
-            <StatCard icon={DollarSign}  label="Total Revenue" value={`Rs ${totalRevenue.toLocaleString()}`} />
+            <StatCard icon={DollarSign}  label="Total Revenue" value={`Rs ${totalRevenue.toLocaleString()}`} hint="Excludes cancelled" />
             <StatCard icon={TrendingUp}  label="Orders Today" value={todaysOrders.length} />
             <StatCard icon={Clock}       label="Pending" value={pending} />
           </div>
 
+          {/* Cancelled notice */}
+          {cancelled > 0 && (
+            <div className="bg-red-50 border border-red-100 rounded-xl px-4 py-3 mb-6 text-sm text-red-700 flex items-center gap-2">
+              <span>⚠️</span>
+              <span><strong>{cancelled}</strong> cancelled/refunded order{cancelled !== 1 ? 's' : ''} — not counted in revenue</span>
+            </div>
+          )}
+
           {/* TWO COLUMN: Recent Orders + Top Products */}
           <div className="grid lg:grid-cols-2 gap-6 mb-8">
-            {/* Recent Orders */}
             <div className="bg-white border border-border rounded-2xl p-6">
               <div className="flex justify-between items-center mb-5">
                 <h2 className="font-bold text-lg">Recent Orders</h2>
@@ -97,30 +109,34 @@ export default function AdminDashboard() {
                 <p className="text-sm text-text-secondary">No orders yet.</p>
               ) : (
                 <div className="space-y-3">
-                  {recent.map((o) => (
-                    <div key={o.id} className="flex justify-between items-center py-2 border-b border-border last:border-0">
-                      <div className="min-w-0">
-                        <div className="font-semibold text-sm truncate">{o.id}</div>
-                        <div className="text-xs text-text-secondary truncate">
-                          {o.customer?.name || '—'} · {o.items?.length || 0} item{(o.items?.length || 0) !== 1 ? 's' : ''}
+                  {recent.map((o) => {
+                    const cancelled = !isRevenueOrder(o);
+                    return (
+                      <div key={o.id} className="flex justify-between items-center py-2 border-b border-border last:border-0">
+                        <div className="min-w-0">
+                          <div className="font-semibold text-sm truncate">{o.id}</div>
+                          <div className="text-xs text-text-secondary truncate">
+                            {o.customer?.name || '—'} · {o.items?.length || 0} item{(o.items?.length || 0) !== 1 ? 's' : ''}
+                          </div>
+                        </div>
+                        <div className="text-right shrink-0 pl-3">
+                          <div className={`font-bold text-sm ${cancelled ? 'text-text-secondary line-through' : 'text-brand-accent'}`}>
+                            Rs {(o.total || 0).toLocaleString()}
+                          </div>
+                          <div className={`text-[10px] uppercase font-semibold ${
+                            o.status === 'delivered' ? 'text-green-600' :
+                            o.status === 'shipped' ? 'text-blue-600' :
+                            o.status === 'cancelled' ? 'text-red-500' :
+                            'text-orange-600'
+                          }`}>{o.status || 'processing'}</div>
                         </div>
                       </div>
-                      <div className="text-right shrink-0 pl-3">
-                        <div className="font-bold text-brand-accent text-sm">Rs {(o.total || 0).toLocaleString()}</div>
-                        <div className={`text-[10px] uppercase font-semibold ${
-                          o.status === 'delivered' ? 'text-green-600' :
-                          o.status === 'shipped' ? 'text-blue-600' :
-                          o.status === 'cancelled' ? 'text-red-500' :
-                          'text-orange-600'
-                        }`}>{o.status || 'processing'}</div>
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>
 
-            {/* Top Products */}
             <div className="bg-white border border-border rounded-2xl p-6">
               <h2 className="font-bold text-lg mb-5">Top Products</h2>
               {topProducts.length === 0 ? (
@@ -143,12 +159,11 @@ export default function AdminDashboard() {
             </div>
           </div>
 
-          {/* QUICK LINKS */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <QuickLink href="/admin/orders"   label="Manage Orders"   icon={ShoppingBag} />
-            <QuickLink href="/admin/products" label="Add Products"    icon={ShoppingBag} />
-            <QuickLink href="/admin/media"    label="Media Library"   icon={ShoppingBag} />
-            <QuickLink href="/admin/coupons"  label="Discount Codes"  icon={ShoppingBag} />
+            <QuickLink href="/admin/orders"   label="Manage Orders"  icon={ShoppingBag} />
+            <QuickLink href="/admin/products" label="Add Products"   icon={ShoppingBag} />
+            <QuickLink href="/admin/media"    label="Media Library"  icon={ShoppingBag} />
+            <QuickLink href="/admin/coupons"  label="Discount Codes" icon={ShoppingBag} />
           </div>
         </>
       )}
@@ -156,7 +171,7 @@ export default function AdminDashboard() {
   );
 }
 
-function StatCard({ icon: Icon, label, value }: { icon: any; label: string; value: string | number }) {
+function StatCard({ icon: Icon, label, value, hint }: { icon: any; label: string; value: string | number; hint?: string }) {
   return (
     <div className="bg-orange-50 border border-orange-100 rounded-2xl p-5">
       <div className="flex items-center gap-2 mb-2">
@@ -164,6 +179,7 @@ function StatCard({ icon: Icon, label, value }: { icon: any; label: string; valu
         <div className="text-[11px] uppercase tracking-wider font-semibold text-text-secondary">{label}</div>
       </div>
       <div className="text-2xl font-bold text-brand-accent">{value}</div>
+      {hint && <div className="text-[10px] text-text-secondary mt-1">{hint}</div>}
     </div>
   );
 }
