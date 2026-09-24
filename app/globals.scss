@@ -1,0 +1,71 @@
+@use '../styles/variables' as *;
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* { margin:0; padding:0; box-sizing:border-box; }
+html { scroll-behavior:smooth; }
+body { font-family:$font-sans; background:#FFF; color:$text-primary; overflow-x:hidden; -webkit-font-smoothing:antialiased; }
+
+@layer components {
+  .btn { @apply inline-flex items-center justify-center gap-2 font-semibold text-sm rounded-lg transition-all duration-300 cursor-pointer; padding:14px 32px; }
+  .btn-primary { @apply text-white border-none; background:#FF6B35; &:hover { background:#e55a2b; transform:translateY(-2px); box-shadow:0 5px 20px rgba(255,107,53,0.4); } }
+  .btn-secondary { @apply bg-white text-text-primary border-2 border-border; &:hover { @apply border-brand-accent text-brand-accent; } }
+}
+
+/* === CSS 3D wireframe cube with PAKLIPPIN label === */
+.css3d-wrap {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  perspective: 500px;
+}
+.css3d-cube {
+  position: relative;
+  width: 80px;
+  height: 80px;
+  transform-style: preserve-3d;
+  animation: css3d-spin 10s linear infinite;
+}
+.css3d-face {
+  position: absolute;
+  width: 80px;
+  height: 80px;
+  border: 1.5px solid #FF6B35;
+  background: rgba(255, 107, 53, 0.05);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backface-visibility: visible;
+}
+.css3d-label {
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  color: #FF6B35;
+  text-align: center;
+  line-height: 1;
+  user-select: none;
+  pointer-events: none;
+}
+.css3d-front  { transform: translateZ(40px); }
+.css3d-back   { transform: rotateY(180deg) translateZ(40px); }
+.css3d-right  { transform: rotateY(90deg)  translateZ(40px); }
+.css3d-left   { transform: rotateY(-90deg) translateZ(40px); }
+.css3d-top    { transform: rotateX(90deg)  translateZ(40px); }
+.css3d-bottom { transform: rotateX(-90deg) translateZ(40px); }
+
+@keyframes css3d-spin {
+  from { transform: rotateX(0deg) rotateY(0deg); }
+  to   { transform: rotateX(360deg) rotateY(360deg); }
+}
+
+@keyframes float { 0%,100%{transform:translateY(0);} 50%{transform:translateY(-20px);} }
+.floating { animation:float 3s ease-in-out infinite; }
+
+::-webkit-scrollbar { width:8px; height:8px; }
+::-webkit-scrollbar-track { background:$brand-secondary; }
+::-webkit-scrollbar-thumb { background:#ccc; border-radius:4px; }
+::-webkit-scrollbar-thumb:hover { background:$brand-accent; }

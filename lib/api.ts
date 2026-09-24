@@ -1,0 +1,61 @@
+import type { Product } from '@/components/shop/ProductCard';
+
+const PRODUCTS_BASE = process.env.NEXT_PUBLIC_PRODUCTS_URL || 'https://paklippin.com/api';
+
+export const FALLBACK_PRODUCTS: Product[] = [
+  { id: 1, name: 'Wireless Headphones', category: 'Electronics', price: 2500, originalPrice: 3000, rating: 4.5, reviews: 128, badge: 'Sale', emoji: '🎧' },
+  { id: 2, name: 'Smart Watch Pro',     category: 'Electronics', price: 8999, originalPrice: 12000, rating: 4.8, reviews: 256, badge: 'New',  emoji: '⌚' },
+  { id: 3, name: 'Premium T-Shirt',     category: 'Clothing',    price: 1299, originalPrice: 1500, rating: 4.3, reviews: 89,  badge: '',     emoji: '👕' },
+  { id: 4, name: 'Running Shoes',       category: 'Sports',      price: 4599, originalPrice: 5500, rating: 4.7, reviews: 167, badge: 'Hot',  emoji: '👟' },
+  { id: 5, name: 'Bluetooth Speaker',   category: 'Electronics', price: 3499, originalPrice: 4000, rating: 4.4, reviews: 203, badge: '',     emoji: '🔊' },
+  { id: 6, name: 'Backpack Pro',        category: 'Accessories', price: 2199, originalPrice: 2500, rating: 4.6, reviews: 145, badge: 'New',  emoji: '🎒' },
+  { id: 7, name: 'Skincare Set',        category: 'Beauty',      price: 1899, originalPrice: 2200, rating: 4.2, reviews: 98,  badge: '',     emoji: '💄' },
+  { id: 8, name: 'Gaming Mouse',        category: 'Electronics', price: 1799, originalPrice: 2000, rating: 4.5, reviews: 312, badge: 'Sale', emoji: '🖱️' },
+];
+
+function normalize(raw: any, idx: number): Product {
+  const price         = Number(raw.price ?? raw.sale_price ?? raw.current_price ?? 0);
+  const originalPrice = Number(raw.originalPrice ?? raw.original_price ?? raw.compare_price ?? raw.mrp ?? price);
+  return {
+    id:            Number(raw.id ?? idx + 1),
+    name:          String(raw.name ?? raw.title ?? 'Unnamed Product'),
+    category:      String(raw.category ?? raw.category_name ?? 'General'),
+    price,
+    originalPrice: originalPrice > price ? originalPrice : price,
+    rating:        Number(raw.rating ?? raw.avg_rating ?? 4.5),
+    reviews:       Number(raw.reviews ?? raw.review_count ?? 0),
+    badge:         String(raw.badge ?? raw.tag ?? ''),
+    emoji:         String(raw.emoji ?? raw.icon ?? '📦'),
+  };
+}
+
+// Use Next.js proxy — avoids CORS + QUIC issues from the browser
+export async function fetchProducts(): Promise<Product[]> {
+  try {
+    const res = await fetch('/api/products', { cache: 'no-store' });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const json = await res.json();
+    const list: any[] = Array.isArray(json) ? json : (json.products ?? json.data ?? []);
+    if (!list.length) throw new Error('Empty response');
+    return list.map(normalize);
+  } catch (err) {
+    console.warn('[api] Falling back to local products:', (err as Error).message);
+    return FALLBACK_PRODUCTS;
+  }
+}
+
+// Export for server-side use if needed
+export async function fetchProductsDirect(): Promise<Product[]> {
+  try {
+    const res = await fetch(`${PRODUCTS_BASE}/products`, {
+      headers: { Accept: 'application/json' },
+      next: { revalidate: 60 },
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const json = await res.json();
+    const list: any[] = Array.isArray(json) ? json : (json.products ?? json.data ?? []);
+    return list.map(normalize);
+  } catch {
+    return FALLBACK_PRODUCTS;
+  }
+}
