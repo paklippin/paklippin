@@ -18,6 +18,7 @@ export type QROrder = {
     notes?: string;
   };
   payment?: { method: string; txnId: string; amount: number };
+  notes?: { text: string; status: string; by: string; at: string }[];
 };
 
 export function buildQRPayload(order: QROrder): string {

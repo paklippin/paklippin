@@ -1,15 +1,19 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { Printer, Package, Search, X, Check, Truck, XCircle, Clock } from 'lucide-react';
+import { Printer, Package, Search, X, Check, Truck, XCircle, Clock, CheckCheck, Send, Loader2 } from 'lucide-react';
 import OrderQR, { type QROrder } from '@/components/admin/OrderQR';
 import { updateOrderStatus, deleteOrder } from '@/lib/user';
 
 const STATUSES = [
   { value: 'processing', label: 'Processing', color: 'bg-orange-100 text-orange-700', icon: Clock },
-  { value: 'shipped',    label: 'Shipped',    color: 'bg-blue-100 text-blue-700',   icon: Truck },
-  { value: 'delivered',  label: 'Delivered',  color: 'bg-green-100 text-green-700', icon: Check },
-  { value: 'cancelled',  label: 'Cancelled',  color: 'bg-red-100 text-red-700',     icon: XCircle },
+  { value: 'confirmed',  label: 'Confirmed',  color: 'bg-teal-100 text-teal-700',     icon: CheckCheck },
+  { value: 'shipped',    label: 'Shipped',    color: 'bg-blue-100 text-blue-700',     icon: Truck },
+  { value: 'delivered',  label: 'Delivered',  color: 'bg-green-100 text-green-700',   icon: Check },
+  { value: 'cancelled',  label: 'Cancelled',  color: 'bg-red-100 text-red-700',       icon: XCircle },
 ];
+
+// Which statuses don't need a note
+const NOTE_OPTIONAL = ['processing', 'confirmed', 'shipped', 'delivered'];
 
 export default function AdminOrdersPage() {
   const [orders, setOrders] = useState<QROrder[]>([]);
@@ -17,6 +21,11 @@ export default function AdminOrdersPage() {
   const [search, setSearch] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [activeQR, setActiveQR] = useState<QROrder | null>(null);
+
+  // Note dialog
+  const [noteOpen, setNoteOpen] = useState<{ orderId: string; status: string } | null>(null);
+  const [noteText, setNoteText] = useState('');
+  const [noteBusy, setNoteBusy] = useState(false);
 
   const loadOrders = async () => {
     setLoading(true);
@@ -32,6 +41,7 @@ export default function AdminOrdersPage() {
         items: Array.isArray(o.items) ? o.items : [],
         customer: o.customer,
         payment: o.payment,
+        notes: Array.isArray(o.notes) ? o.notes : [],
       })));
     } catch {}
     setLoading(false);
@@ -43,10 +53,43 @@ export default function AdminOrdersPage() {
     return () => clearInterval(id);
   }, []);
 
-  const handleStatusChange = async (id: string, status: string) => {
-    setOrders((prev) => prev.map((o) => o.id === id ? { ...o, status } : o));
-    const ok = await updateOrderStatus(id, status);
-    if (!ok) loadOrders();
+  const openNoteDialog = (orderId: string, status: string) => {
+    setNoteOpen({ orderId, status });
+    setNoteText('');
+  };
+
+  const submitStatus = async () => {
+    if (!noteOpen) return;
+    const needsNote = !NOTE_OPTIONAL.includes(noteOpen.status);
+    if (needsNote && !noteText.trim()) {
+      alert('Please add a reason for this status change');
+      return;
+    }
+    setNoteBusy(true);
+
+    // Optimistic update
+    setOrders((prev) =>
+      prev.map((o) => o.id === noteOpen.orderId
+        ? {
+            ...o,
+            status: noteOpen.status,
+            notes: noteText.trim()
+              ? [...(o.notes || []), {
+                  text: noteText.trim(),
+                  status: noteOpen.status,
+                  by: 'admin',
+                  at: new Date().toISOString(),
+                }]
+              : o.notes,
+          }
+        : o)
+    );
+
+    await updateOrderStatus(noteOpen.orderId, noteOpen.status, noteText.trim(), 'admin');
+    setNoteBusy(false);
+    setNoteOpen(null);
+    setNoteText('');
+    setTimeout(loadOrders, 400);
   };
 
   const handleDelete = async (id: string) => {
@@ -88,9 +131,10 @@ Total: Rs ${order.total.toLocaleString()}</pre>
       (o.customer?.phone || '').toLowerCase().includes(s);
   });
 
-  const counts = {
+  const counts: Record<string, number> = {
     all: orders.length,
     processing: orders.filter((o) => o.status === 'processing').length,
+    confirmed:  orders.filter((o) => o.status === 'confirmed').length,
     shipped:    orders.filter((o) => o.status === 'shipped').length,
     delivered:  orders.filter((o) => o.status === 'delivered').length,
     cancelled:  orders.filter((o) => o.status === 'cancelled').length,
@@ -104,13 +148,20 @@ Total: Rs ${order.total.toLocaleString()}</pre>
       </div>
 
       <div className="flex flex-wrap gap-2 mb-6">
-        {[['all','All'],['processing','Processing'],['shipped','Shipped'],['delivered','Delivered'],['cancelled','Cancelled']].map(([k, l]) => (
+        {([
+          ['all', 'All'],
+          ['processing', 'Processing'],
+          ['confirmed', 'Confirmed'],
+          ['shipped', 'Shipped'],
+          ['delivered', 'Delivered'],
+          ['cancelled', 'Cancelled'],
+        ]).map(([k, l]) => (
           <button key={k} onClick={() => setFilterStatus(k)}
             className={`px-4 py-2 rounded-full text-xs font-semibold transition ${
               filterStatus === k ? 'bg-brand-accent text-white'
                 : 'bg-white border-2 border-border text-text-secondary hover:border-brand-accent hover:text-brand-accent'
             }`}>
-            {l} ({(counts as any)[k] ?? 0})
+            {l} ({counts[k] ?? 0})
           </button>
         ))}
       </div>
@@ -134,6 +185,7 @@ Total: Rs ${order.total.toLocaleString()}</pre>
       <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-6">
         {filtered.map((o) => {
           const meta = STATUSES.find((s) => s.value === o.status) || STATUSES[0];
+          const notes = (o as any).notes || [];
           return (
             <div key={o.id} className="bg-white border border-border rounded-2xl p-5 flex flex-col">
               <div className="flex justify-between items-start mb-4">
@@ -157,22 +209,50 @@ Total: Rs ${order.total.toLocaleString()}</pre>
                 </div>
               </div>
 
-              <div className="grid grid-cols-4 gap-1 mb-3">
+              {/* STATUS BUTTONS — 5 across, full labels */}
+              <div className="grid grid-cols-5 gap-1 mb-3">
                 {STATUSES.map((s) => {
                   const Icon = s.icon;
                   const active = o.status === s.value;
                   return (
-                    <button key={s.value} onClick={() => handleStatusChange(o.id, s.value)}
-                      className={`flex flex-col items-center gap-0.5 py-1.5 rounded-lg text-[9px] font-semibold transition ${
+                    <button
+                      key={s.value}
+                      onClick={() => openNoteDialog(o.id, s.value)}
+                      className={`flex flex-col items-center gap-1 py-2 rounded-lg text-[10px] font-semibold transition ${
                         active ? s.color + ' ring-2 ring-offset-1 ring-current'
                           : 'bg-brand-secondary text-text-secondary hover:bg-brand-accent hover:text-white'
-                      }`}>
+                      }`}
+                    >
                       <Icon size={12} />
-                      {s.label.slice(0, 6)}
+                      <span className="leading-tight text-center">{s.label}</span>
                     </button>
                   );
                 })}
               </div>
+
+              {/* Notes timeline (if any) */}
+              {notes.length > 0 && (
+                <div className="pt-3 mb-3 border-t border-border">
+                  <div className="text-[10px] uppercase tracking-wider font-semibold text-text-secondary mb-2">
+                    Activity ({notes.length})
+                  </div>
+                  <div className="space-y-1.5 max-h-[120px] overflow-y-auto pr-1">
+                    {notes.slice(-3).map((n: any, i: number) => (
+                      <div key={i} className="flex gap-2 text-[11px]">
+                        <div className="w-1.5 h-1.5 rounded-full bg-brand-accent mt-1.5 shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className="font-semibold uppercase text-[9px] text-brand-accent">{n.status}</span>
+                            <span className="text-text-secondary text-[9px]">{new Date(n.at).toLocaleString('en-PK')}</span>
+                            {n.by && <span className="text-text-secondary text-[9px]">· {n.by}</span>}
+                          </div>
+                          <div className="text-text-primary truncate">{n.text}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               <div className="flex gap-2 mt-auto pt-3 border-t border-border">
                 <button onClick={() => setActiveQR(o)}
@@ -194,6 +274,87 @@ Total: Rs ${order.total.toLocaleString()}</pre>
         })}
       </div>
 
+      {/* NOTE DIALOG */}
+      {noteOpen && (
+        <div className="fixed inset-0 bg-black/70 z-[3000] flex items-center justify-center p-4" onClick={() => setNoteOpen(null)}>
+          <div onClick={(e) => e.stopPropagation()} className="bg-white rounded-2xl max-w-[440px] w-full p-6 relative">
+            <button onClick={() => setNoteOpen(null)} className="absolute top-4 right-4 w-8 h-8 rounded-full bg-brand-secondary flex items-center justify-center">
+              <X size={16} />
+            </button>
+            {(() => {
+              const s = STATUSES.find((x) => x.value === noteOpen.status) || STATUSES[0];
+              const Icon = s.icon;
+              const required = !NOTE_OPTIONAL.includes(noteOpen.status);
+              return (
+                <>
+                  <div className="flex items-center gap-2 mb-1">
+                    <Icon size={18} className="text-brand-accent" />
+                    <h3 className="font-bold text-lg">Change to {s.label}</h3>
+                  </div>
+                  <p className="text-xs text-text-secondary mb-4">
+                    Order <strong>{noteOpen.orderId}</strong>
+                    {required && ' · Reason required'}
+                  </p>
+
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-text-secondary mb-2">
+                    Note {required ? '*' : '(optional)'}
+                  </label>
+                  <textarea
+                    id="admin-order-note"
+                    name="orderNote"
+                    value={noteText}
+                    onChange={(e) => setNoteText(e.target.value)}
+                    placeholder={
+                      noteOpen.status === 'cancelled' ? 'e.g. Customer requested cancellation' :
+                      noteOpen.status === 'shipped' ? 'e.g. Shipped via TCS, tracking #ABC123' :
+                      noteOpen.status === 'delivered' ? 'e.g. Delivered successfully' :
+                      'Add a note (optional)'
+                    }
+                    rows={3}
+                    autoFocus
+                    className="w-full px-3 py-2 rounded-lg border-2 border-border focus:border-brand-accent outline-none text-sm resize-none"
+                  />
+
+                  {/* Quick reason chips for cancellations */}
+                  {noteOpen.status === 'cancelled' && (
+                    <div className="flex flex-wrap gap-1.5 mt-2">
+                      {[
+                        'Customer requested',
+                        'Out of stock',
+                        'Payment not verified',
+                        'Duplicate order',
+                        'Address issue',
+                      ].map((r) => (
+                        <button
+                          key={r}
+                          type="button"
+                          onClick={() => setNoteText(r)}
+                          className="text-[10px] px-2.5 py-1 rounded-full border border-border hover:border-brand-accent hover:text-brand-accent transition"
+                        >
+                          {r}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  <div className="flex gap-2 mt-4">
+                    <button onClick={() => setNoteOpen(null)}
+                      className="flex-1 py-2.5 rounded-lg border-2 border-border font-semibold text-sm hover:border-brand-accent transition">
+                      Cancel
+                    </button>
+                    <button onClick={submitStatus} disabled={noteBusy}
+                      className="flex-1 py-2.5 rounded-lg bg-brand-accent text-white font-semibold text-sm hover:bg-[#e55a2b] transition disabled:opacity-50 flex items-center justify-center gap-1.5">
+                      {noteBusy ? <><Loader2 size={13} className="animate-spin" /> Saving...</> : <><Send size={13} /> Confirm</>}
+                    </button>
+                  </div>
+                </>
+              );
+            })()}
+          </div>
+        </div>
+      )}
+
+      {/* QR MODAL */}
       {activeQR && (
         <div className="fixed inset-0 bg-black/80 z-[3000] flex items-center justify-center p-4" onClick={() => setActiveQR(null)}>
           <div onClick={(e) => e.stopPropagation()} className="bg-white rounded-3xl p-8 max-w-[500px] w-full text-center relative">
