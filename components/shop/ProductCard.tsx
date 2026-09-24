@@ -11,6 +11,10 @@ export type Product = {
   reviews: number;
   badge: string;
   emoji: string;
+  imageUrl?: string;
+  stock?: number;
+  description?: string;
+  active?: number;
 };
 
 type Props = {
@@ -20,19 +24,34 @@ type Props = {
   onWish: (id: number) => void;
 };
 
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://shop.paklippin.com';
+
 export default function ProductCard({ product, onOpen, onAdd, onWish }: Props) {
+  const hasImage = product.imageUrl && product.imageUrl.trim();
+
   return (
     <div
       onClick={() => onOpen(product.id)}
       className="bg-white rounded-2xl overflow-hidden shadow cursor-pointer relative transition-all duration-300 hover:-translate-y-2 hover:shadow-hover"
     >
       <div className="h-[280px] bg-brand-secondary relative overflow-hidden">
-        <ProductBox3D />
+        {hasImage ? (
+          <img
+            src={product.imageUrl!.startsWith('http') ? product.imageUrl! : `${API_BASE}${product.imageUrl}`}
+            alt={product.name}
+            loading="lazy"
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <ProductBox3D />
+        )}
+
         {product.badge && (
           <span className="absolute top-4 left-4 bg-brand-accent text-white px-3 py-1.5 rounded-full text-xs font-semibold">
             {product.badge}
           </span>
         )}
+
         <button
           onClick={(e) => { e.stopPropagation(); onWish(product.id); }}
           className="absolute top-4 right-4 w-9 h-9 bg-white rounded-full flex items-center justify-center shadow hover:bg-[#ff4757] hover:text-white transition text-sm"
@@ -41,6 +60,7 @@ export default function ProductCard({ product, onOpen, onAdd, onWish }: Props) {
           ❤️
         </button>
       </div>
+
       <div className="p-5">
         <div className="text-xs text-brand-accent font-semibold uppercase tracking-wider">
           {product.category}
@@ -52,9 +72,11 @@ export default function ProductCard({ product, onOpen, onAdd, onWish }: Props) {
           <span className="text-xl font-bold text-brand-accent">
             Rs {product.price.toLocaleString()}
           </span>
-          <span className="text-sm text-text-secondary line-through">
-            Rs {product.originalPrice.toLocaleString()}
-          </span>
+          {product.originalPrice > product.price && (
+            <span className="text-sm text-text-secondary line-through">
+              Rs {product.originalPrice.toLocaleString()}
+            </span>
+          )}
         </div>
         <div className="flex items-center gap-1.5 mt-2.5 text-sm text-text-secondary">
           <span className="text-[#ffc107]">
