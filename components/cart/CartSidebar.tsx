@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { useEffect } from 'react';
 import type { Product } from '@/components/shop/ProductCard';
 import { useSettings } from '@/lib/settings-store';
+import { useCurrency } from '@/lib/use-currency';
 
 export type CartItem = Product & { quantity: number };
 
@@ -16,6 +17,7 @@ type Props = {
 
 export default function CartSidebar({ open, items, onClose, onQty, onRemove }: Props) {
   const { settings, load } = useSettings();
+  const { price } = useCurrency();
 
   useEffect(() => { load(); }, [load]);
 
@@ -59,9 +61,7 @@ export default function CartSidebar({ open, items, onClose, onQty, onRemove }: P
                 </div>
                 <div className="flex-1">
                   <div className="font-semibold text-sm mb-1">{item.name}</div>
-                  <div className="text-brand-accent font-semibold text-sm">
-                    Rs {item.price.toLocaleString()}
-                  </div>
+                  <div className="text-brand-accent font-semibold text-sm">{price(item.price)}</div>
                   <div className="flex items-center gap-2.5 mt-2">
                     <button onClick={() => onQty(item.id, -1)} className="w-7 h-7 border border-border bg-white rounded font-semibold text-sm">−</button>
                     <span className="text-sm min-w-[20px] text-center">{item.quantity}</span>
@@ -77,7 +77,7 @@ export default function CartSidebar({ open, items, onClose, onQty, onRemove }: P
         <div className="p-5 border-t border-border">
           {!freeShipping && subtotal > 0 && (
             <div className="text-xs text-text-secondary mb-3 text-center">
-              Add <strong className="text-brand-accent">Rs {(settings.shipping_threshold - subtotal).toLocaleString()}</strong> more for free shipping
+              Add <strong className="text-brand-accent">{price(settings.shipping_threshold - subtotal)}</strong> more for free shipping
             </div>
           )}
           {freeShipping && subtotal > 0 && (
@@ -89,19 +89,19 @@ export default function CartSidebar({ open, items, onClose, onQty, onRemove }: P
           <div className="space-y-2 text-sm mb-3">
             <div className="flex justify-between text-text-secondary">
               <span>Subtotal:</span>
-              <span>Rs {subtotal.toLocaleString()}</span>
+              <span>{price(subtotal)}</span>
             </div>
             <div className="flex justify-between text-text-secondary">
               <span>Delivery:</span>
               <span className={freeShipping ? 'text-brand-success font-semibold' : ''}>
-                {freeShipping ? 'FREE' : `Rs ${deliveryFee}`}
+                {freeShipping ? 'FREE' : price(deliveryFee)}
               </span>
             </div>
           </div>
 
           <div className="flex justify-between text-lg font-bold mb-4 pt-3 border-t border-border">
             <span>Total:</span>
-            <span>Rs {total.toLocaleString()}</span>
+            <span>{price(total)}</span>
           </div>
 
           <Link

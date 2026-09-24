@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import ProductBox3D from '@/components/3d/ProductBox3D';
+import { useCurrency } from '@/lib/use-currency';
 
 export type Product = {
   id: number;
@@ -29,6 +30,7 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://shop.paklippin.com'
 
 export default function ProductCard({ product, onOpen, onAdd, onWish }: Props) {
   const [wished, setWished] = useState(false);
+  const { price } = useCurrency();
   const hasImage = product.imageUrl && product.imageUrl.trim();
 
   useEffect(() => {
@@ -91,14 +93,10 @@ export default function ProductCard({ product, onOpen, onAdd, onWish }: Props) {
         <div className="text-base font-semibold my-2 text-text-primary">
           {product.name}
         </div>
-        <div className="flex items-center gap-2.5">
-          <span className="text-xl font-bold text-brand-accent">
-            Rs {product.price.toLocaleString()}
-          </span>
+        <div className="flex items-center gap-2.5 flex-wrap">
+          <span className="text-xl font-bold text-brand-accent">{price(product.price)}</span>
           {product.originalPrice > product.price && (
-            <span className="text-sm text-text-secondary line-through">
-              Rs {product.originalPrice.toLocaleString()}
-            </span>
+            <span className="text-sm text-text-secondary line-through">{price(product.originalPrice)}</span>
           )}
         </div>
         <div className="flex items-center gap-1.5 mt-2.5 text-sm text-text-secondary">

@@ -6,7 +6,6 @@ export const LANGUAGES = [
   { code: 'pa', name: 'Punjabi', native: 'ਪੰਜਾਬੀ' },
   { code: 'sd', name: 'Sindhi', native: 'سنڌي' },
   { code: 'ps', name: 'Pashto', native: 'پښتو' },
-  { code: 'bal', name: 'Balochi', native: 'بلوچی' },
   { code: 'zh', name: 'Chinese', native: '中文' },
   { code: 'es', name: 'Spanish', native: 'Español' },
   { code: 'fr', name: 'French', native: 'Français' },
@@ -80,8 +79,16 @@ export function setCurrency(code: string) {
   localStorage.setItem('pref_currency', code);
   window.dispatchEvent(new Event('pref-change'));
 }
+
+// Convert a PKR amount → current currency, formatted
 export function convertPrice(pkr: number, currency = getCurrency()) {
   const rate = PKR_RATES[currency] || 1;
   const cur  = CURRENCIES.find((c) => c.code === currency) || CURRENCIES[0];
-  return `${cur.symbol} ${(pkr * rate).toFixed(currency === 'PKR' ? 0 : 2)}`;
+  const value = pkr * rate;
+  // 0 decimals for PKR, INR, JPY, KRW; 2 decimals for others
+  const decimals = ['PKR', 'INR', 'JPY', 'KRW'].includes(currency) ? 0 : 2;
+  return `${cur.symbol} ${value.toLocaleString('en-PK', {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
+  })}`;
 }

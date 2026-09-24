@@ -128,6 +128,19 @@ export default function SettingsPage() {
           <p className="text-xs text-text-secondary mt-2">
             Selected: <strong>{currency}</strong> — all prices will convert from PKR
           </p>
+          <div className="mt-3 bg-brand-secondary rounded-lg p-3 text-xs">
+            <div className="text-text-secondary mb-1">Preview:</div>
+            <div className="font-bold text-brand-accent">
+              Rs 5,000 → {(() => {
+                const { PKR_RATES, CURRENCIES } = require('@/lib/locale');
+                const rate = PKR_RATES[currency] || 1;
+                const cur = CURRENCIES.find((c: any) => c.code === currency) || CURRENCIES[0];
+                const val = 5000 * rate;
+                const dec = ['PKR','INR','JPY','KRW'].includes(currency) ? 0 : 2;
+                return `${cur.symbol} ${val.toLocaleString('en-PK', { minimumFractionDigits: dec, maximumFractionDigits: dec })}`;
+              })()}
+            </div>
+          </div>
         </div>
 
         {/* -------- Save -------- */}
