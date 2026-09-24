@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard, Package, ShoppingBag, Users,
-  Image as ImageIcon, Ticket, Settings, LogOut, Menu, X
+  Image as ImageIcon, Ticket, Settings, LogOut, Menu, X, Share2
 } from 'lucide-react';
 
 const ADMIN_PASSWORD = 'P@52545254';
@@ -17,6 +17,7 @@ const NAV = [
   { href: '/admin/media',     label: 'Media',     icon: ImageIcon },
   { href: '/admin/users',     label: 'Users',     icon: Users },
   { href: '/admin/coupons',   label: 'Coupons',   icon: Ticket },
+  { href: '/admin/social',    label: 'Social',    icon: Share2 },
   { href: '/admin/settings',  label: 'Settings',  icon: Settings },
 ];
 
@@ -54,7 +55,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   if (!ready) return null;
 
-  // -------- LOGIN FORM --------
   if (!authed) {
     return (
       <div className="min-h-[80vh] grid place-items-center px-5 py-16">
@@ -63,6 +63,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <p className="text-sm text-text-secondary text-center mb-6">Enter your password to continue</p>
           <form onSubmit={handleLogin} className="space-y-4">
             <input
+              id="admin-password"
+              name="adminPassword"
+              autoComplete="current-password"
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -83,21 +86,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     );
   }
 
-  // -------- RESOLVE LINKS FOR BOTH HOSTS --------
-  const resolveHref = (href: string) => {
-    if (isAdminHost) return href.replace('/admin', '') || '/';
-    return href;
-  };
+  const resolveHref = (href: string) => isAdminHost ? (href.replace('/admin', '') || '/') : href;
   const isActive = (href: string) => {
     const p = resolveHref(href);
     if (p === '/' || p === '/admin') return pathname === '/' || pathname === '/admin';
     return pathname.startsWith(p);
   };
 
-  // -------- AUTHENTICATED LAYOUT --------
   return (
     <div className="max-w-[1400px] mx-auto px-[5%] py-8 grid lg:grid-cols-[240px_1fr] gap-8">
-      {/* MOBILE TOP BAR */}
       <div className="lg:hidden flex items-center justify-between mb-2">
         <div className="font-bold text-lg text-brand-accent">Admin</div>
         <button onClick={() => setMobileOpen(true)} className="p-2 rounded-lg border border-border">
@@ -105,11 +102,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </button>
       </div>
 
-      {/* SIDEBAR (mobile drawer + desktop) */}
       <aside className={`
         fixed lg:static top-0 left-0 h-full lg:h-fit w-[260px] lg:w-auto z-[2100] lg:z-0
         bg-white border-r lg:border-r-0 lg:rounded-2xl lg:border lg:border-border p-5
-        transition-transform duration-300
+        transition-transform duration-300 overflow-y-auto
         ${mobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
       `}>
         <div className="flex items-center justify-between mb-6">
@@ -160,12 +156,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </div>
       </aside>
 
-      {/* BACKDROP for mobile drawer */}
       {mobileOpen && (
         <div className="lg:hidden fixed inset-0 bg-black/50 z-[2000]" onClick={() => setMobileOpen(false)} />
       )}
 
-      {/* MAIN CONTENT */}
       <main className="min-w-0">{children}</main>
     </div>
   );
