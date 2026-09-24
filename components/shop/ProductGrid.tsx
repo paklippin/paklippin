@@ -1,9 +1,10 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import ProductCard, { type Product } from './ProductCard';
 import ProductModal from '@/components/ui/ProductModal';
 import Toast from '@/components/ui/Toast';
+import ProductFilters, { DEFAULT_FILTERS, type FilterState } from './ProductFilters';
 import { fetchProducts } from '@/lib/api';
 
 type Props = {
@@ -17,24 +18,45 @@ export default function ProductGrid({ limit, filter = 'all', categoryFilter }: P
   const urlCategory = params?.get('category') || '';
   const activeCategory = categoryFilter || urlCategory;
 
-  const [products, setProducts] = useState<Product[]>([]);
+  const [allProducts, setAllProducts] = useState<Product[]>([]);
+  const [filters, setFilters] = useState<FilterState>(DEFAULT_FILTERS);
   const [modalProduct, setModalProduct] = useState<Product | null>(null);
   const [toast, setToast] = useState({ show: false, msg: '' });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchProducts().then((all) => {
-      let list = all;
-      if (filter === 'sale') list = all.filter((p) => p.badge?.toLowerCase() === 'sale' || p.originalPrice > p.price);
-      if (filter === 'new')  list = all.filter((p) => p.badge?.toLowerCase() === 'new');
-      if (activeCategory) {
-        list = list.filter((p) => p.category.toLowerCase() === activeCategory.toLowerCase());
-      }
-      if (limit) list = list.slice(0, limit);
-      setProducts(list);
-      setLoading(false);
-    });
-  }, [limit, filter, activeCategory]);
+    fetchProducts().then((all) => { setAllProducts(all); setLoading(false); });
+  }, []);
+
+  const products = useMemo(() => {
+    let list = allProducts;
+
+    // Filter: sale
+    if (filter === 'sale') list = list.filter((p) => p.badge?.toLowerCase() === 'sale' || p.originalPrice > p.price);
+    // Filter: new
+    if (filter === 'new')  list = list.filter((p) => p.badge?.toLowerCase() === 'new');
+    // Filter: category
+    if (activeCategory) list = list.filter((p) => p.category.toLowerCase() === activeCategory.toLowerCase());
+
+    // Price range
+    list = list.filter((p) => p.price >= filters.minPrice && p.price <= filters.maxPrice);
+
+    // Stock
+    if (filters.inStockOnly) list = list.filter((p) => (p.stock ?? 999) > 0);
+
+    // Sort
+    switch (filters.sort) {
+      case 'price-low':  list = [...list].sort((a, b) => a.price - b.price); break;
+      case 'price-high': list = [...list].sort((a, b) => b.price - a.price); break;
+      case 'rating':     list = [...list].sort((a, b) => (b.rating || 0) - (a.rating || 0)); break;
+      case 'name':       list = [...list].sort((a, b) => a.name.localeCompare(b.name)); break;
+      case 'newest':
+      default:           list = [...list].sort((a, b) => b.id - a.id); break;
+    }
+
+    if (limit) list = list.slice(0, limit);
+    return list;
+  }, [allProducts, filters, filter, activeCategory, limit]);
 
   const showToast = (msg: string) => {
     setToast({ show: true, msg });
@@ -42,8 +64,9 @@ export default function ProductGrid({ limit, filter = 'all', categoryFilter }: P
   };
 
   const addToCart = (id: number) => {
-    const p = products.find((x) => x.id === id);
+    const p = allProducts.find((x) => x.id === id);
     if (!p) return;
+    if ((p.stock ?? 999) <= 0) { showToast('This product is out of stock'); return; }
     try {
       const raw = localStorage.getItem('cart-storage') || '{}';
       const data = JSON.parse(raw);
@@ -73,42 +96,40 @@ export default function ProductGrid({ limit, filter = 'all', categoryFilter }: P
     return <div className="text-center py-16 text-text-secondary text-sm">Loading products...</div>;
   }
 
-  if (products.length === 0) {
-    return (
-      <div className="text-center py-16">
-        <p className="text-text-secondary mb-4">
-          {activeCategory ? `No products in "${activeCategory}" yet.` : 'No products found.'}
-        </p>
-        {activeCategory && (
-          <a href="/shop" className="text-brand-accent hover:underline text-sm">View all products →</a>
-        )}
-      </div>
-    );
-  }
-
   return (
     <>
+      <ProductFilters filters={filters} onChange={setFilters} totalResults={products.length} />
+
       {activeCategory && (
-        <div className="mb-6 text-center">
-          <p className="text-sm text-text-secondary">
-            Showing <strong className="text-brand-accent">{products.length}</strong> product{products.length !== 1 ? 's' : ''} in <strong>{activeCategory}</strong>
+        <div className="mb-4 text-center">
+          <p className="text-xs text-text-secondary">
+            Category: <strong className="text-brand-accent">{activeCategory}</strong>
             {' · '}
-            <a href="/shop" className="text-brand-accent hover:underline">Clear filter</a>
+            <a href="/shop" className="text-brand-accent hover:underline">Clear</a>
           </p>
         </div>
       )}
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-7">
-        {products.map((p) => (
-          <ProductCard
-            key={p.id}
-            product={p}
-            onOpen={(id) => setModalProduct(products.find((x) => x.id === id) || null)}
-            onAdd={addToCart}
-            onWish={toggleWishlist}
-          />
-        ))}
-      </div>
+      {products.length === 0 ? (
+        <div className="text-center py-16">
+          <p className="text-text-secondary mb-4">No products match your filters.</p>
+          <button onClick={() => setFilters(DEFAULT_FILTERS)} className="text-brand-accent hover:underline text-sm font-semibold">
+            Reset all filters
+          </button>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-7">
+          {products.map((p) => (
+            <ProductCard
+              key={p.id}
+              product={p}
+              onOpen={(id) => setModalProduct(products.find((x) => x.id === id) || null)}
+              onAdd={addToCart}
+              onWish={toggleWishlist}
+            />
+          ))}
+        </div>
+      )}
 
       <ProductModal
         product={modalProduct}

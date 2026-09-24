@@ -32,6 +32,9 @@ export default function ProductCard({ product, onOpen, onAdd, onWish }: Props) {
   const [wished, setWished] = useState(false);
   const { price } = useCurrency();
   const hasImage = product.imageUrl && product.imageUrl.trim();
+  const stock = product.stock ?? 999;
+  const outOfStock = stock <= 0;
+  const lowStock = stock > 0 && stock <= 5;
 
   useEffect(() => {
     const check = () => {
@@ -63,18 +66,36 @@ export default function ProductCard({ product, onOpen, onAdd, onWish }: Props) {
             src={product.imageUrl!.startsWith('http') ? product.imageUrl! : `${API_BASE}${product.imageUrl}`}
             alt={product.name}
             loading="lazy"
-            className="w-full h-full object-cover"
+            className={`w-full h-full object-cover ${outOfStock ? 'opacity-40' : ''}`}
           />
         ) : (
           <ProductBox3D />
         )}
 
+        {/* Badge */}
         {product.badge && (
           <span className="absolute top-4 left-4 bg-brand-accent text-white px-3 py-1.5 rounded-full text-xs font-semibold">
             {product.badge}
           </span>
         )}
 
+        {/* Low stock indicator */}
+        {lowStock && !outOfStock && (
+          <span className="absolute top-4 left-4 bg-red-500 text-white px-3 py-1.5 rounded-full text-[10px] font-bold">
+            Only {stock} left!
+          </span>
+        )}
+
+        {/* Out of stock overlay */}
+        {outOfStock && (
+          <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+            <span className="bg-red-600 text-white px-5 py-2 rounded-lg text-sm font-bold uppercase tracking-wider">
+              Out of Stock
+            </span>
+          </div>
+        )}
+
+        {/* Wishlist */}
         <button
           onClick={handleWish}
           className={`absolute top-4 right-4 w-9 h-9 rounded-full flex items-center justify-center shadow transition text-sm ${
@@ -108,9 +129,14 @@ export default function ProductCard({ product, onOpen, onAdd, onWish }: Props) {
         </div>
         <button
           onClick={(e) => { e.stopPropagation(); onAdd(product.id); }}
-          className="w-full py-3 bg-brand-primary text-white border-none rounded-lg font-semibold mt-4 transition hover:bg-brand-accent"
+          disabled={outOfStock}
+          className={`w-full py-3 rounded-lg font-semibold mt-4 transition ${
+            outOfStock
+              ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+              : 'bg-brand-primary text-white hover:bg-brand-accent'
+          }`}
         >
-          Add to Cart
+          {outOfStock ? 'Out of Stock' : 'Add to Cart'}
         </button>
       </div>
     </div>
