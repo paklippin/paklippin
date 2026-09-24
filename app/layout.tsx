@@ -6,6 +6,7 @@ import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import CartProvider from '@/components/cart/CartProvider';
 import BottomNav from '@/components/layout/BottomNav';
+import ChatWidget from '@/components/chat/ChatWidget';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 
@@ -27,6 +28,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Footer />
         <CartProvider />
         <BottomNav />
+        <ChatWidget />
       </body>
     </html>
   );
