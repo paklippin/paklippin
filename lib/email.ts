@@ -175,3 +175,36 @@ export function orderStatusHtml(order: any, newStatus: string, note?: string): s
     </div>
   `;
 }
+
+export function passwordResetHtml(resetLink: string): string {
+  return `
+    <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;color:#1A1A1A">
+      <div style="background:#FF6B35;padding:24px;text-align:center;border-radius:12px 12px 0 0">
+        <h1 style="color:#fff;margin:0;font-size:22px">Reset Your Password 🔐</h1>
+      </div>
+      <div style="padding:24px;background:#fff;border:1px solid #eee;border-radius:0 0 12px 12px">
+        <p>Hi,</p>
+        <p>Someone requested a password reset for your PAKLIPPIN account.</p>
+        <p>If this was you, click the button below to set a new password. This link expires in <strong>30 minutes</strong>.</p>
+
+        <p style="text-align:center;margin:28px 0">
+          <a href="${resetLink}"
+             style="background:#FF6B35;color:#fff;text-decoration:none;padding:14px 32px;border-radius:8px;display:inline-block;font-weight:bold">
+            Reset My Password
+          </a>
+        </p>
+
+        <p style="color:#888;font-size:12px">Or copy this link into your browser:</p>
+        <p style="color:#FF6B35;font-size:12px;word-break:break-all">${resetLink}</p>
+
+        <hr style="border:none;border-top:1px solid #eee;margin:24px 0">
+        <p style="color:#888;font-size:12px">
+          If you did NOT request this, you can safely ignore this email. Your password won't change until you click the link above.
+        </p>
+        <p style="color:#888;font-size:11px;text-align:center;margin-top:24px">
+          PAKLIPPIN (SMC-PRIVATE) LIMITED · SECP 0352216
+        </p>
+      </div>
+    </div>
+  `;
+}

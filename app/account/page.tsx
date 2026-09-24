@@ -80,6 +80,13 @@ export default function AccountPage() {
             <input id="reg-password" name="password" autoComplete={mode === 'login' ? 'current-password' : 'new-password'} type="password" placeholder="Password" value={form.password}
               onChange={(e) => setForm({ ...form, password: e.target.value })}
               className="w-full px-4 py-3 rounded-xl border-2 border-border focus:border-brand-accent outline-none text-sm transition" />
+            {mode === 'login' && (
+              <div className="text-right -mt-2">
+                <Link href="/account/forgot-password" className="text-xs text-brand-accent hover:underline">
+                  Forgot password?
+                </Link>
+              </div>
+            )}
             {error && <p className="text-sm text-red-500 text-center">{error}</p>}
             <button type="submit" className="w-full py-3 bg-brand-accent text-white rounded-xl font-semibold hover:bg-[#e55a2b] transition">
               {mode === 'login' ? 'Login' : 'Register'}
