@@ -27,10 +27,11 @@ export function writeUser(u: { name: string; email: string; phone?: string }) {
   localStorage.setItem('auth-storage', JSON.stringify({ state: { user: u }, version: 0 }));
   localStorage.setItem('user_email', u.email);
   localStorage.setItem('user_name',  u.name);
+  if (u.phone) localStorage.setItem('user_phone', u.phone);
 }
 
 export function clearUser() {
-  ['auth-storage', 'paklippin-auth', 'auth', 'user', 'user_email', 'user_name']
+  ['auth-storage', 'paklippin-auth', 'auth', 'user', 'user_email', 'user_name', 'user_phone']
     .forEach((k) => localStorage.removeItem(k));
 }
 
@@ -66,25 +67,56 @@ function readLocal(): Order[] {
   } catch { return []; }
 }
 
-export async function fetchOrders(email?: string): Promise<Order[]> {
-  let apiList: Order[] = [];
-  const qs = email ? `?email=${encodeURIComponent(email)}` : '';
+// Only keep local orders that belong to the given email
+function filterLocalByEmail(list: Order[], email: string): Order[] {
+  const target = (email || '').toLowerCase().trim();
+  if (!target) return [];
+  return list.filter((o) => (o.customer?.email || '').toLowerCase().trim() === target);
+}
+
+// Push a single order to D1 (fire and forget)
+async function pushToD1(order: Order) {
   try {
-    const res = await fetch(`/api/orders${qs}`, { cache: 'no-store' });
-    if (res.ok) {
-      const json = await res.json();
-      const list: any[] = Array.isArray(json) ? json : (json.orders ?? json.data ?? []);
-      apiList = list.map(normalize);
+    await fetch('/api/orders', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(order),
+    });
+  } catch {}
+}
+
+// Sync any local-only orders that aren't yet in D1
+export async function syncLocalOrders(email: string): Promise<void> {
+  const local = filterLocalByEmail(readLocal(), email);
+  if (!local.length) return;
+  // We can't easily know which exist in D1 without another call,
+  // so just push them all — the INSERT OR REPLACE makes it idempotent.
+  await Promise.all(local.map(pushToD1));
+}
+
+export async function fetchOrders(email?: string): Promise<Order[]> {
+  const target = (email || '').toLowerCase().trim();
+  let apiList: Order[] = [];
+
+  if (target) {
+    try {
+      const res = await fetch(`/api/orders?email=${encodeURIComponent(target)}`, { cache: 'no-store' });
+      if (res.ok) {
+        const json = await res.json();
+        const list: any[] = Array.isArray(json) ? json : (json.orders ?? json.data ?? []);
+        apiList = list.map(normalize);
+      }
+    } catch (e) {
+      console.warn('[orders] API failed:', (e as Error).message);
     }
-  } catch (e) {
-    console.warn('[orders] API failed:', (e as Error).message);
   }
 
-  const localList = readLocal();
+  // ✅ ONLY local orders that belong to this user
+  const localList = filterLocalByEmail(readLocal(), target);
 
-  // Merge — API wins, but keep local-only orders too
+  // Merge + dedupe by ID
   const byId = new Map<string, Order>();
-  [...localList, ...apiList].forEach((o) => {
+  [...apiList, ...localList].forEach((o) => {
     if (!o.id) return;
     byId.set(o.id, o);
   });
@@ -96,9 +128,8 @@ export async function fetchOrders(email?: string): Promise<Order[]> {
   });
 }
 
-// NEW — update order status (admin)
 export async function updateOrderStatus(id: string, status: string): Promise<boolean> {
-  // Update locally first for instant UI feedback
+  // Local update
   try {
     const raw = localStorage.getItem('user_orders');
     if (raw) {
@@ -115,10 +146,7 @@ export async function updateOrderStatus(id: string, status: string): Promise<boo
       body: JSON.stringify({ status }),
     });
     return res.ok;
-  } catch (e) {
-    console.warn('[orders] PATCH failed:', (e as Error).message);
-    return false;
-  }
+  } catch { return false; }
 }
 
 export async function deleteOrder(id: string): Promise<boolean> {
@@ -132,9 +160,7 @@ export async function deleteOrder(id: string): Promise<boolean> {
   try {
     const res = await fetch(`/api/orders?id=${encodeURIComponent(id)}`, { method: 'DELETE' });
     return res.ok;
-  } catch {
-    return false;
-  }
+  } catch { return false; }
 }
 
 export function generateOrderId(): string {
@@ -166,11 +192,9 @@ export async function createOrder(order: NewOrder): Promise<{ ok: boolean; offli
       const data = await res.json().catch(() => ({}));
       if (data.ok) apiOk = true;
     }
-  } catch (e) {
-    console.warn('[orders] POST failed:', (e as Error).message);
-  }
+  } catch {}
 
-  // Always save locally too (safety net)
+  // Always also save locally (safety net)
   try {
     const raw = localStorage.getItem('user_orders');
     const list: any[] = raw ? JSON.parse(raw) : [];
