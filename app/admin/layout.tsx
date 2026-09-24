@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard, Package, ShoppingBag, Users,
-  Image as ImageIcon, Ticket, Settings, LogOut, Menu, X, Share2
+  Image as ImageIcon, Ticket, Settings, LogOut, Menu, X, Share2, Star
 } from 'lucide-react';
 
 const ADMIN_PASSWORD = 'P@52545254';
@@ -17,6 +17,7 @@ const NAV = [
   { href: '/admin/media',     label: 'Media',     icon: ImageIcon },
   { href: '/admin/users',     label: 'Users',     icon: Users },
   { href: '/admin/coupons',   label: 'Coupons',   icon: Ticket },
+  { href: '/admin/reviews',   label: 'Reviews',   icon: Star },
   { href: '/admin/social',    label: 'Social',    icon: Share2 },
   { href: '/admin/settings',  label: 'Settings',  icon: Settings },
 ];

@@ -1,7 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Package, Truck, Settings, LogOut } from 'lucide-react';
+import { LayoutDashboard, Package, Truck, Settings, LogOut, Heart } from 'lucide-react';
 
 type User = { name?: string; email?: string };
 
@@ -11,12 +11,13 @@ export function AccountShell({ children, user }: { children: React.ReactNode; us
   const links = [
     { href: '/account',          icon: LayoutDashboard, label: 'Overview' },
     { href: '/account/orders',   icon: Package,         label: 'My Orders' },
+    { href: '/wishlist',         icon: Heart,           label: 'My Wishlist' },
     { href: '/account/track',    icon: Truck,           label: 'Track Order' },
     { href: '/account/settings', icon: Settings,        label: 'Settings' },
   ];
 
   const handleLogout = () => {
-    ['auth-storage', 'paklippin-auth', 'auth', 'user', 'user_email', 'user_name']
+    ['auth-storage', 'paklippin-auth', 'auth', 'user', 'user_email', 'user_name', 'user_phone']
       .forEach((k) => localStorage.removeItem(k));
     window.location.href = '/';
   };
@@ -26,7 +27,6 @@ export function AccountShell({ children, user }: { children: React.ReactNode; us
 
   return (
     <div className="max-w-[1400px] mx-auto px-[5%] py-12 grid md:grid-cols-[260px_1fr] gap-8">
-      {/* Sidebar */}
       <aside className="bg-white border border-border rounded-2xl p-6 h-fit">
         <div className="flex flex-col items-center text-center pb-6 border-b border-border">
           <div
@@ -66,7 +66,6 @@ export function AccountShell({ children, user }: { children: React.ReactNode; us
         </nav>
       </aside>
 
-      {/* Main */}
       <main className="min-w-0">{children}</main>
     </div>
   );
