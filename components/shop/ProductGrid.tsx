@@ -135,6 +135,8 @@ export default function ProductGrid({ limit, filter = 'all', categoryFilter }: P
         product={modalProduct}
         onClose={() => setModalProduct(null)}
         onAdd={(id) => { addToCart(id); setModalProduct(null); }}
+        allProducts={products}
+        onOpenProduct={(id) => setModalProduct(products.find((x) => x.id === id) || null)}
       />
 
       <Toast message={toast.msg} show={toast.show} />

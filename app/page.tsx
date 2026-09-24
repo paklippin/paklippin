@@ -4,6 +4,7 @@ import HeroScene from '@/components/3d/HeroScene';
 import ProductCard, { type Product } from '@/components/shop/ProductCard';
 import CategoryGrid from '@/components/shop/CategoryGrid';
 import FeatureGrid from '@/components/shop/FeatureGrid';
+import RecentlyViewed from '@/components/shop/RecentlyViewed';
 import ProductModal from '@/components/ui/ProductModal';
 import Toast from '@/components/ui/Toast';
 import { fetchProducts, FALLBACK_PRODUCTS } from '@/lib/api';
@@ -84,6 +85,7 @@ export default function Home() {
         </div>
       </section>
 
+      <RecentlyViewed />
       <CategoryGrid />
       <FeatureGrid />
 

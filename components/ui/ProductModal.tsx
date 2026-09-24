@@ -4,19 +4,26 @@ import { X } from 'lucide-react';
 import ModalViewer from '@/components/3d/ModalViewer';
 import ReviewSection from '@/components/shop/ReviewSection';
 import ProductGallery from '@/components/shop/ProductGallery';
+import RelatedProducts from '@/components/shop/RelatedProducts';
+import { trackView } from '@/lib/recent';
 import type { Product } from '@/components/shop/ProductCard';
 
 type Props = {
   product: Product | null;
   onClose: () => void;
   onAdd: (id: number) => void;
+  allProducts?: Product[];
+  onOpenProduct?: (id: number) => void;
 };
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://shop.paklippin.com';
 
-export default function ProductModal({ product, onClose, onAdd }: Props) {
+export default function ProductModal({ product, onClose, onAdd, allProducts = [], onOpenProduct }: Props) {
   const [mounted, setMounted] = useState(false);
   useEffect(() => { setMounted(true); }, []);
+  useEffect(() => {
+    if (product?.id) trackView(product.id);
+  }, [product?.id]);
 
   if (!product || !mounted) return null;
 
@@ -93,6 +100,15 @@ export default function ProductModal({ product, onClose, onAdd }: Props) {
 
           {/* Reviews */}
           <ReviewSection productId={product.id} />
+
+          {/* Related products */}
+          {allProducts.length > 0 && onOpenProduct && (
+            <RelatedProducts
+              currentProduct={product}
+              allProducts={allProducts}
+              onOpen={onOpenProduct}
+            />
+          )}
         </div>
       </div>
     </div>
