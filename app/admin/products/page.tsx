@@ -19,8 +19,8 @@ export default function AdminProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState<Product | null>(null);
-  const [galleryProduct, setGalleryProduct] = useState<Product | null>(null);
   const [creating, setCreating] = useState(false);
+  const [galleryProduct, setGalleryProduct] = useState<Product | null>(null);
   const [form, setForm] = useState<Omit<Product, 'id'>>(EMPTY);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -38,11 +38,7 @@ export default function AdminProductsPage() {
 
   useEffect(() => { load(); }, []);
 
-  const openCreate = () => {
-    setForm(EMPTY);
-    setCreating(true);
-    setEditing(null);
-  };
+  const openCreate = () => { setForm(EMPTY); setCreating(true); setEditing(null); };
 
   const openEdit = (p: Product) => {
     setForm({
@@ -64,11 +60,8 @@ export default function AdminProductsPage() {
       fd.append('file', file);
       const res = await fetch('/api/upload?folder=products', { method: 'POST', body: fd });
       const data = await res.json();
-      if (data.ok && data.url) {
-        setForm((f) => ({ ...f, imageUrl: data.url }));
-      } else {
-        alert('Upload failed');
-      }
+      if (data.ok && data.url) setForm((f) => ({ ...f, imageUrl: data.url }));
+      else alert('Upload failed');
     } catch { alert('Upload failed'); }
     setUploading(false);
   };
@@ -178,7 +171,15 @@ export default function AdminProductsPage() {
                       <div className="text-xs text-text-secondary line-through">Rs {p.originalPrice.toLocaleString()}</div>
                     )}
                   </td>
-                  <td className="px-4 py-3 text-sm">{p.stock}</td>
+                  <td className="px-4 py-3">
+                    <span className={`text-sm font-semibold ${
+                      (p.stock ?? 0) <= 0 ? 'text-red-500' :
+                      (p.stock ?? 0) <= 5 ? 'text-orange-500' :
+                      'text-text-primary'
+                    }`}>
+                      {p.stock ?? 0}
+                    </span>
+                  </td>
                   <td className="px-4 py-3 text-right">
                     <div className="flex justify-end gap-1">
                       <button onClick={() => setGalleryProduct(p)}
@@ -203,7 +204,7 @@ export default function AdminProductsPage() {
         </div>
       )}
 
-      {/* MODAL */}
+      {/* ADD / EDIT MODAL */}
       {(editing || creating) && (
         <div className="fixed inset-0 bg-black/70 z-[3000] flex items-center justify-center p-4 overflow-y-auto" onClick={closeModal}>
           <div onClick={(e) => e.stopPropagation()}
@@ -213,9 +214,8 @@ export default function AdminProductsPage() {
             </button>
             <h2 className="text-xl font-bold mb-5">{editing ? 'Edit Product' : 'Add Product'}</h2>
 
-            {/* Image upload */}
             <div className="mb-4">
-              <label className={labelCls}>Image</label>
+              <label className={labelCls}>Main Image</label>
               <div className="flex gap-3 items-center">
                 <div className="w-24 h-24 rounded-xl bg-brand-secondary flex items-center justify-center overflow-hidden shrink-0">
                   {form.imageUrl ? (
@@ -231,7 +231,7 @@ export default function AdminProductsPage() {
                   <span className={`flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-semibold cursor-pointer transition ${
                     uploading ? 'bg-brand-secondary text-text-secondary' : 'bg-brand-accent text-white hover:bg-[#e55a2b]'
                   }`}>
-                    {uploading ? <><Loader2 size={14} className="animate-spin" /> Uploading...</> : <><Upload size={14} /> Upload Image</>}
+                    {uploading ? <><Loader2 size={14} className="animate-spin" /> Uploading...</> : <><Upload size={14} /> Upload Main Image</>}
                   </span>
                 </label>
               </div>
@@ -292,8 +292,8 @@ export default function AdminProductsPage() {
           </div>
         </div>
       )}
-    </div>
 
+      {/* GALLERY MODAL */}
       {galleryProduct && (
         <ProductGalleryManager
           productId={galleryProduct.id}
