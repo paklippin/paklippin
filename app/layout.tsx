@@ -5,6 +5,7 @@ import NoticeBar from '@/components/layout/NoticeBar';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import CartProvider from '@/components/cart/CartProvider';
+import BottomNav from '@/components/layout/BottomNav';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 
@@ -22,9 +23,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         <NoticeBar />
         <Navbar />
-        <main>{children}</main>
+        <main className="pb-[60px] md:pb-0">{children}</main>
         <Footer />
         <CartProvider />
+        <BottomNav />
       </body>
     </html>
   );
