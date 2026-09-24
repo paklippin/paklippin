@@ -1,23 +1,46 @@
+import PolicyLayout from '@/components/legal/PolicyLayout';
+
 export const metadata = { title: 'Returns & Refunds — PAKLIPPIN' };
+
 export default function ReturnsPage() {
   return (
-    <div className="max-w-[860px] mx-auto px-5 py-12">
-      <h1 className="font-display font-bold text-4xl mb-3">Returns &amp; Refunds</h1>
-      <p className="text-gray-400 text-sm mb-8">Last updated: 23 September 2026</p>
-      <div className="bg-white border border-gray-100 rounded-2xl p-8 space-y-4 text-gray-700 text-[15px] leading-relaxed">
-        <h2 className="font-display font-bold text-lg text-brand-dark">Return Window</h2>
-        <p>7 days from delivery.</p>
-        <h2 className="font-display font-bold text-lg text-brand-dark pt-3">Eligible</h2>
-        <ul className="list-disc pl-6 space-y-1">
-          <li>Defective or damaged items</li>
-          <li>Wrong product delivered</li>
-          <li>Unused items in original packaging</li>
-        </ul>
-        <h2 className="font-display font-bold text-lg text-brand-dark pt-3">Refund</h2>
-        <p>7–14 business days to your EasyPaisa account.</p>
-        <h2 className="font-display font-bold text-lg text-brand-dark pt-3">Contact</h2>
-        <p>info@paklippin.com · +92 339 7579547</p>
-      </div>
-    </div>
+    <PolicyLayout
+      title="Returns & Refunds"
+      updated="September 2026"
+      sections={[
+        { heading: 'Return Window',
+          body: 'You can return any product within 7 days of delivery. Products must be unused, undamaged, and in original packaging with all tags attached.' },
+        { heading: 'Non-Returnable Items',
+          body: [
+            'Perishable goods (food, fresh produce)',
+            'Personal care items (opened cosmetics, skincare)',
+            'Intimate apparel and swimwear',
+            'Customized or personalized products',
+            'Digital downloads and gift cards',
+          ]},
+        { heading: 'How to Initiate a Return',
+          body: [
+            'Log in to your account and go to My Orders',
+            'Click "Return" on the relevant order',
+            'Provide a reason and any photos of damage/defect',
+            'Our team reviews within 24 hours and provides return instructions',
+            'Ship the product back to us (we reimburse shipping for defective items)',
+          ]},
+        { heading: 'Refund Timelines',
+          body: [
+            'Refunds processed within 3–5 business days after we receive and inspect the return',
+            'Amount refunded to your original EasyPaisa account',
+            'You receive confirmation via WhatsApp',
+          ]},
+        { heading: 'Exchanges',
+          body: 'Prefer an exchange instead of a refund? Mention it in the return note. We\'ll send the new item once the original is received.' },
+        { heading: 'Defective or Wrong Items',
+          body: 'If you received a damaged, defective, or incorrect product: contact us within 48 hours with photos. We cover return shipping and send a replacement immediately.' },
+        { heading: 'Cancellations',
+          body: 'Cancel free of charge any time before your order ships. After shipping, treat it as a return. To cancel: My Orders → Cancel Order.' },
+        { heading: 'Refusals',
+          body: 'You may refuse delivery at the door if the package is visibly damaged. The order will be returned to us and fully refunded.' },
+      ]}
+    />
   );
 }

@@ -1,20 +1,50 @@
+import PolicyLayout from '@/components/legal/PolicyLayout';
+
 export const metadata = { title: 'Privacy Policy — PAKLIPPIN' };
+
 export default function PrivacyPage() {
   return (
-    <div className="max-w-[860px] mx-auto px-5 py-12">
-      <h1 className="font-display font-bold text-4xl mb-3">Privacy Policy</h1>
-      <p className="text-gray-400 text-sm mb-8">Last updated: 23 September 2026</p>
-      <div className="bg-white border border-gray-100 rounded-2xl p-8 space-y-4 text-gray-700 text-[15px] leading-relaxed">
-        <p>PAKLIPPIN (SMC-PRIVATE) LIMITED respects your privacy.</p>
-        <h2 className="font-display font-bold text-lg text-brand-dark pt-3">Information We Collect</h2>
-        <p>Name, email, phone, delivery address, EasyPaisa TID.</p>
-        <h2 className="font-display font-bold text-lg text-brand-dark pt-3">How We Use It</h2>
-        <p>To process orders, deliver, provide support, prevent fraud.</p>
-        <h2 className="font-display font-bold text-lg text-brand-dark pt-3">Sharing</h2>
-        <p>We never sell your data. Shared only with courier partners and Cloudflare (our host).</p>
-        <h2 className="font-display font-bold text-lg text-brand-dark pt-3">Contact</h2>
-        <p>info@paklippin.com</p>
-      </div>
-    </div>
+    <PolicyLayout
+      title="Privacy Policy"
+      updated="September 2026"
+      sections={[
+        { heading: '1. Information We Collect',
+          body: [
+            'Personal details: name, email, phone, delivery address',
+            'Order details: products purchased, amounts, dates',
+            'Payment info: EasyPaisa transaction ID (we do NOT store card or wallet credentials)',
+            'Device data: IP address, browser type, pages visited',
+          ]},
+        { heading: '2. How We Use Your Information',
+          body: [
+            'Process and deliver your orders',
+            'Verify payments and prevent fraud',
+            'Provide customer support',
+            'Send order updates via WhatsApp, SMS, or email',
+            'Improve our platform and recommendations',
+          ]},
+        { heading: '3. Information Sharing',
+          body: 'We never sell your data. We share information only with: (a) delivery partners to ship your order, (b) payment processors to verify transactions, (c) legal authorities when required by law.' },
+        { heading: '4. Data Security',
+          body: 'We use industry-standard SSL encryption and secure servers. Passwords are stored using one-way hashing. We conduct regular security audits. However, no system is 100% secure — please use a strong password.' },
+        { heading: '5. Cookies',
+          body: 'We use essential cookies for cart functionality and login sessions. Analytics cookies help us understand site usage. You can disable non-essential cookies in your browser settings.' },
+        { heading: '6. Your Rights',
+          body: [
+            'Access a copy of your personal data',
+            'Correct inaccurate information',
+            'Delete your account and data (subject to legal retention requirements)',
+            'Opt out of marketing communications',
+          ]},
+        { heading: '7. Data Retention',
+          body: 'We retain order data for 7 years (tax/legal compliance). Account data is deleted within 30 days of a deletion request, except records we must keep by law.' },
+        { heading: '8. Children\'s Privacy',
+          body: 'Our services are not intended for children under 13. We do not knowingly collect data from minors.' },
+        { heading: '9. Changes to This Policy',
+          body: 'We may update this policy periodically. Material changes will be notified via email or a site banner.' },
+        { heading: '10. Contact Us',
+          body: 'For privacy questions: info@paklippin.com or WhatsApp +92 339 7579547.' },
+      ]}
+    />
   );
 }
