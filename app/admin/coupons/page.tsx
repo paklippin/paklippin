@@ -135,15 +135,15 @@ export default function AdminCouponsPage() {
                 </div>
                 <div>
                   <label className={labelCls}>Value</label>
-                  <input type="number" value={form.value} onChange={(e) => setForm({ ...form, value: Number(e.target.value) })} className={inputCls} />
+                  <input id="coup-value" name="value" type="number" value={form.value} onChange={(e) => setForm({ ...form, value: Number(e.target.value) })} className={inputCls} />
                 </div>
                 <div>
                   <label className={labelCls}>Min Order (Rs)</label>
-                  <input type="number" value={form.minOrder} onChange={(e) => setForm({ ...form, minOrder: Number(e.target.value) })} className={inputCls} />
+                  <input id="coup-minOrder" name="minOrder" type="number" value={form.minOrder} onChange={(e) => setForm({ ...form, minOrder: Number(e.target.value) })} className={inputCls} />
                 </div>
                 <div>
                   <label className={labelCls}>Max Uses (0 = unlimited)</label>
-                  <input type="number" value={form.maxUses} onChange={(e) => setForm({ ...form, maxUses: Number(e.target.value) })} className={inputCls} />
+                  <input id="coup-maxUses" name="maxUses" type="number" value={form.maxUses} onChange={(e) => setForm({ ...form, maxUses: Number(e.target.value) })} className={inputCls} />
                 </div>
                 <div className="col-span-2">
                   <label className={labelCls}>Expires (optional)</label>

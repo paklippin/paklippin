@@ -96,6 +96,8 @@ export default function ProductFilters({
               <div className="text-xs font-semibold uppercase tracking-wider text-text-secondary mb-3">Price Range (Rs)</div>
               <div className="flex items-center gap-3 mb-3">
                 <input
+                  id="filter-minPrice"
+                  name="minPrice"
                   type="number"
                   value={local.minPrice}
                   onChange={(e) => setLocal({ ...local, minPrice: Math.max(0, Number(e.target.value)) })}
@@ -104,6 +106,8 @@ export default function ProductFilters({
                 />
                 <span className="text-text-secondary text-sm">to</span>
                 <input
+                  id="filter-maxPrice"
+                  name="maxPrice"
                   type="number"
                   value={local.maxPrice}
                   onChange={(e) => setLocal({ ...local, maxPrice: Math.max(0, Number(e.target.value)) })}

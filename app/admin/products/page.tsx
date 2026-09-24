@@ -328,15 +328,15 @@ export default function AdminProductsPage() {
               </div>
               <div>
                 <label className={labelCls}>Price (Rs) *</label>
-                <input type="number" value={form.price} onChange={(e) => setForm({ ...form, price: Number(e.target.value) })} className={inputCls} />
+                <input id="prod-price" name="price" type="number" value={form.price} onChange={(e) => setForm({ ...form, price: Number(e.target.value) })} className={inputCls} />
               </div>
               <div>
                 <label className={labelCls}>Original Price (Rs)</label>
-                <input type="number" value={form.originalPrice} onChange={(e) => setForm({ ...form, originalPrice: Number(e.target.value) })} className={inputCls} />
+                <input id="prod-originalPrice" name="originalPrice" type="number" value={form.originalPrice} onChange={(e) => setForm({ ...form, originalPrice: Number(e.target.value) })} className={inputCls} />
               </div>
               <div>
                 <label className={labelCls}>Stock</label>
-                <input type="number" value={form.stock} onChange={(e) => setForm({ ...form, stock: Number(e.target.value) })} className={inputCls} />
+                <input id="prod-stock" name="stock" type="number" value={form.stock} onChange={(e) => setForm({ ...form, stock: Number(e.target.value) })} className={inputCls} />
               </div>
               <div>
                 <label className={labelCls}>Emoji (fallback)</label>

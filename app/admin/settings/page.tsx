@@ -110,7 +110,7 @@ export default function AdminSettingsPage() {
             </div>
             <div>
               <label className={labelCls}>Tax Rate (%)</label>
-              <input type="number" value={form.tax_rate} onChange={(e) => setForm({ ...form, tax_rate: Number(e.target.value) })} className={inputCls} />
+              <input id="set-taxRate" name="taxRate" type="number" value={form.tax_rate} onChange={(e) => setForm({ ...form, tax_rate: Number(e.target.value) })} className={inputCls} />
             </div>
           </div>
         </div>
