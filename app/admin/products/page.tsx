@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { Plus, Pencil, Trash2, X, Upload, Loader2, Search } from 'lucide-react';
+import { Plus, Pencil, Trash2, X, Upload, Loader2, Search, Images } from 'lucide-react';
+import ProductGalleryManager from '@/components/admin/ProductGalleryManager';
 
 type Product = {
   id: number; name: string; category: string;
@@ -18,6 +19,7 @@ export default function AdminProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState<Product | null>(null);
+  const [galleryProduct, setGalleryProduct] = useState<Product | null>(null);
   const [creating, setCreating] = useState(false);
   const [form, setForm] = useState<Omit<Product, 'id'>>(EMPTY);
   const [saving, setSaving] = useState(false);
@@ -179,6 +181,11 @@ export default function AdminProductsPage() {
                   <td className="px-4 py-3 text-sm">{p.stock}</td>
                   <td className="px-4 py-3 text-right">
                     <div className="flex justify-end gap-1">
+                      <button onClick={() => setGalleryProduct(p)}
+                        className="p-2 rounded-lg hover:bg-brand-secondary text-text-secondary hover:text-brand-accent transition"
+                        title="Manage photos">
+                        <Images size={15} />
+                      </button>
                       <button onClick={() => openEdit(p)}
                         className="p-2 rounded-lg hover:bg-brand-secondary text-text-secondary hover:text-brand-accent transition" title="Edit">
                         <Pencil size={15} />
@@ -284,6 +291,15 @@ export default function AdminProductsPage() {
             </div>
           </div>
         </div>
+      )}
+    </div>
+
+      {galleryProduct && (
+        <ProductGalleryManager
+          productId={galleryProduct.id}
+          productName={galleryProduct.name}
+          onClose={() => { setGalleryProduct(null); load(); }}
+        />
       )}
     </div>
   );
