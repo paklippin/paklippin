@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "npx opennextjs-cloudflare",
+    "build": "npx opennextjs-cloudflare build",
     "start": "next start",
     "pages:build": "npx @cloudflare/next-on-pages@1",
     "pages:deploy": "npx wrangler pages deploy .vercel/output/static --project-name=paklippin-store",
