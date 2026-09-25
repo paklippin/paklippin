@@ -1,7 +1,5 @@
 import type { Product } from '@/components/shop/ProductCard';
 
-const LIVE_API = process.env.NEXT_PUBLIC_PRODUCTS_URL || 'https://paklippin.com/api';
-
 export const FALLBACK_PRODUCTS: Product[] = [
   { id: 1, name: 'Wireless Headphones', category: 'Electronics', price: 2500, originalPrice: 3000, rating: 4.5, reviews: 128, badge: 'Sale', emoji: '🎧' },
   { id: 2, name: 'Smart Watch Pro',     category: 'Electronics', price: 8999, originalPrice: 12000, rating: 4.8, reviews: 256, badge: 'New',  emoji: '⌚' },
@@ -30,9 +28,11 @@ function normalize(raw: any, idx: number): Product {
   };
 }
 
-// 3-tier fallback: D1 → live API → hardcoded
+/**
+ * Fetch products from our OWN Next.js API route.
+ * Always uses a RELATIVE url — never cross-origin, never CORS-blocked.
+ */
 export async function fetchProducts(): Promise<Product[]> {
-  // Tier 1: our own proxy (reads from D1)
   try {
     const res = await fetch('/api/products', { cache: 'no-store' });
     if (res.ok) {
@@ -44,25 +44,9 @@ export async function fetchProducts(): Promise<Product[]> {
       }
     }
   } catch (e) {
-    console.warn('[api] D1 fetch failed:', (e as Error).message);
+    console.warn('[api] fetch failed:', (e as Error).message);
   }
 
-  // Tier 2: live API (paklippin.com)
-  try {
-    const res = await fetch(`${LIVE_API}/products`, { cache: 'no-store' });
-    if (res.ok) {
-      const json = await res.json();
-      const list: any[] = Array.isArray(json) ? json : (json.products ?? []);
-      if (list.length) {
-        console.log('[api] Products from LIVE:', list.length);
-        return list.map(normalize);
-      }
-    }
-  } catch (e) {
-    console.warn('[api] Live API failed:', (e as Error).message);
-  }
-
-  // Tier 3: hardcoded fallback
   console.log('[api] Using hardcoded products');
   return FALLBACK_PRODUCTS;
 }

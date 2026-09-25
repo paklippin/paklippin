@@ -1,13 +1,12 @@
 export const runtime = 'edge';
 import { NextResponse } from 'next/server';
 
-const D1_API = process.env.NEXT_PUBLIC_API_URL || 'https://shop.paklippin.com';
-const LIVE_API = process.env.NEXT_PUBLIC_PRODUCTS_URL || 'https://paklippin.com/api';
+// Server-side: hardcoded URLs are fine (no CORS between servers)
+const WORKER_API = 'https://paklippinshop.paklippin.workers.dev';
 
 export async function GET() {
-  // Tier 1: D1 via our Worker
   try {
-    const res = await fetch(`${D1_API}/products`, { cache: 'no-store' });
+    const res = await fetch(`${WORKER_API}/products`, { cache: 'no-store' });
     if (res.ok) {
       const data = await res.json();
       const list = Array.isArray(data) ? data : (data.products ?? []);
@@ -15,19 +14,8 @@ export async function GET() {
         return NextResponse.json({ products: list, source: 'd1' });
       }
     }
-  } catch {}
-
-  // Tier 2: live API
-  try {
-    const res = await fetch(`${LIVE_API}/products`, { cache: 'no-store' });
-    if (res.ok) {
-      const data = await res.json();
-      const list = Array.isArray(data) ? data : (data.products ?? []);
-      if (list.length) {
-        return NextResponse.json({ products: list, source: 'live' });
-      }
-    }
-  } catch {}
-
+  } catch (e) {
+    console.warn('[products proxy] worker fetch failed:', (e as Error).message);
+  }
   return NextResponse.json({ products: [], source: 'empty' });
 }
