@@ -1,19 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const STOREFRONT_URL = 'https://paklippinshop.pages.dev';
+const STOREFRONT_HOST = 'paklippinshop.pages.dev';
 
-const ADMIN_PATHS = new Set([
-  '', 'orders', 'products', 'users', 'media',
-  'coupons', 'reviews', 'social', 'settings',
-]);
+const ADMIN_PAGES = ['orders', 'products', 'users', 'media', 'coupons', 'reviews', 'social', 'settings'];
 
 export function middleware(req: NextRequest) {
-  const host = req.headers.get('host') || '';
+  // ✅ Try EVERY possible header — one of these will have admin.paklippin.com
+  const host =
+    req.headers.get('x-forwarded-host') ||
+    req.headers.get('x-original-host') ||
+    req.headers.get('host') ||
+    req.nextUrl.hostname ||
+    '';
+
   const path = req.nextUrl.pathname;
-  const isAdminHost = host.startsWith('admin.');
 
-  if (!isAdminHost) return NextResponse.next();
+  // Passthrough for non-admin
+  if (!host.includes('admin.')) {
+    return NextResponse.next();
+  }
 
+  // Passthrough internal paths
   if (
     path.startsWith('/admin') ||
     path.startsWith('/api') ||
@@ -24,21 +31,24 @@ export function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
-  const cleaned = path.replace(/^\/+|\/+$/g, '');
-
-  if (cleaned === '') {
+  // Root → admin dashboard
+  if (path === '/' || path === '') {
     const url = req.nextUrl.clone();
     url.pathname = '/admin';
     return NextResponse.rewrite(url);
   }
 
-  if (ADMIN_PATHS.has(cleaned)) {
+  // Admin sub-pages → /admin/xxx
+  const segment = path.replace(/^\/+|\/+$/g, '');
+  if (ADMIN_PAGES.includes(segment)) {
     const url = req.nextUrl.clone();
-    url.pathname = '/admin/' + cleaned;
+    url.pathname = '/admin/' + segment;
     return NextResponse.rewrite(url);
   }
 
-  return NextResponse.redirect(STOREFRONT_URL + path + req.nextUrl.search, 307);
+  // Everything else → 307 redirect to storefront
+  const target = new URL(path + req.nextUrl.search, 'https://' + STOREFRONT_HOST);
+  return NextResponse.redirect(target, 307);
 }
 
 export const config = {
