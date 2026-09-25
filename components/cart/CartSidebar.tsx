@@ -108,6 +108,7 @@ export default function CartSidebar({ open, items, onClose, onQty, onRemove }: P
 
           <Link
             href="/checkout"
+            prefetch={false}
             onClick={onClose}
             className={`block text-center w-full py-3.5 rounded-lg font-semibold text-sm transition ${
               items.length
