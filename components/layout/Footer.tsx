@@ -13,6 +13,11 @@ const PLATFORM_EMOJI: Record<string, string> = {
 
 export default function Footer() {
   const [social, setSocial] = useState<SocialLink[]>([]);
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.location.host.startsWith('admin.')) setIsAdmin(true);
+  }, []);
 
   useEffect(() => {
     fetch('/api/social-links', { cache: 'no-store' })
@@ -39,6 +44,8 @@ export default function Footer() {
     { href: '/shipping', label: 'Shipping Policy' },
     { href: '/returns',  label: 'Returns Policy' },
   ];
+
+  if (isAdmin) return null;
 
   return (
     <footer className="bg-[#1a1a1a] text-white pt-16 pb-8">

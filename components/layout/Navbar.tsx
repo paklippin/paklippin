@@ -14,9 +14,14 @@ export default function Navbar() {
   const [user, setUser] = useState<UserInfo>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [search, setSearch] = useState('');
   const openCart = useUI((s) => s.openCart);
   const { t } = useI18n();
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.location.host.startsWith('admin.')) setIsAdmin(true);
+  }, []);
   const router = useRouter();
 
   useEffect(() => {
@@ -84,6 +89,8 @@ export default function Navbar() {
   ];
 
   const firstName = user?.name?.split(' ')[0] || 'User';
+
+  if (isAdmin) return null;
 
   return (
     <>

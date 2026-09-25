@@ -1,9 +1,14 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export default function NoticeBar() {
   const [show, setShow] = useState(true);
-  if (!show) return null;
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.location.host.startsWith('admin.')) setIsAdmin(true);
+  }, []);
+  if (!show || isAdmin) return null;
 
   return (
     <div className="bg-brand-primary text-white text-xs sm:text-sm px-4 py-2 relative">

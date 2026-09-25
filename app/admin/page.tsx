@@ -34,19 +34,23 @@ const STATUS_LIST = [
 export default function AdminDashboard() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
+  const [usersCount, setUsersCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
   const load = async () => {
     try {
-      const [oRes, pRes] = await Promise.all([
+      const [oRes, pRes, uRes] = await Promise.all([
         fetch('/api/admin/orders', { cache: 'no-store' }),
         fetch('/api/admin/products', { cache: 'no-store' }),
+        fetch('/api/admin/users', { cache: 'no-store' }),
       ]);
       const oJson = await oRes.json();
       const pJson = await pRes.json();
+      const uJson = await uRes.json();
       setOrders(Array.isArray(oJson.orders) ? oJson.orders : []);
       setProducts(Array.isArray(pJson.products) ? pJson.products : []);
+      setUsersCount(Array.isArray(uJson.users) ? uJson.users.length : 0);
     } catch {}
     setLoading(false);
   };
@@ -70,19 +74,15 @@ export default function AdminDashboard() {
     const pending = orders.filter((o) => (o.status || '').toLowerCase() === 'processing').length;
     const delivered = orders.filter((o) => (o.status || '').toLowerCase() === 'delivered').length;
     const todaysOrders = orders.filter((o) => o.date && new Date(o.date) >= today);
-    const uniqueCustomers = new Set(
-      orders.map((o) => o.customer?.email || '').filter(Boolean)
-    ).size;
-
     return {
       totalOrders: orders.length,
       totalRevenue,
       pending,
       delivered,
-      customers: uniqueCustomers,
+      customers: usersCount,
       todaysOrders: todaysOrders.length,
     };
-  }, [orders]);
+  }, [orders, usersCount]);
 
   const statusCounts = useMemo(() => {
     const map: Record<string, number> = {};
@@ -476,7 +476,7 @@ function CategoryDonut({ data }: { data: { name: string; value: number }[] }) {
     const seg = {
       ...d,
       dashLength,
-      offset: circumference - cumulative,
+      offset: -cumulative,
       color: COLORS[i % COLORS.length],
     };
     cumulative += dashLength;
