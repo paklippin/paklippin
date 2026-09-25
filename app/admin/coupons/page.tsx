@@ -116,38 +116,38 @@ export default function AdminCouponsPage() {
 
             <div className="space-y-4">
               <div>
-                <label className={labelCls}>Code *</label>
-                <input value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value.toUpperCase() })}
+                <label htmlFor="fld-code" className={labelCls}>Code *</label>
+                <input id="fld-code" name="fld-code" value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value.toUpperCase() })}
                   placeholder="EID25" className={`${inputCls} tracking-wider font-mono`} />
               </div>
               <div>
-                <label className={labelCls}>Description</label>
-                <input value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })}
+                <label htmlFor="fld-description" className={labelCls}>Description</label>
+                <input id="fld-description" name="fld-description" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })}
                   placeholder="25% off for Eid" className={inputCls} />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className={labelCls}>Type</label>
-                  <select value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })} className={inputCls}>
+                  <label htmlFor="fld-type" className={labelCls}>Type</label>
+                  <select id="fld-type" name="fld-type" value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })} className={inputCls}>
                     <option value="percentage">Percentage (%)</option>
                     <option value="fixed">Fixed (Rs)</option>
                   </select>
                 </div>
                 <div>
-                  <label className={labelCls}>Value</label>
+                  <label htmlFor="coup-value" className={labelCls}>Value</label>
                   <input id="coup-value" name="value" type="number" value={form.value} onChange={(e) => setForm({ ...form, value: Number(e.target.value) })} className={inputCls} />
                 </div>
                 <div>
-                  <label className={labelCls}>Min Order (Rs)</label>
+                  <label htmlFor="coup-minOrder" className={labelCls}>Min Order (Rs)</label>
                   <input id="coup-minOrder" name="minOrder" type="number" value={form.minOrder} onChange={(e) => setForm({ ...form, minOrder: Number(e.target.value) })} className={inputCls} />
                 </div>
                 <div>
-                  <label className={labelCls}>Max Uses (0 = unlimited)</label>
+                  <label htmlFor="coup-maxUses" className={labelCls}>Max Uses (0 = unlimited)</label>
                   <input id="coup-maxUses" name="maxUses" type="number" value={form.maxUses} onChange={(e) => setForm({ ...form, maxUses: Number(e.target.value) })} className={inputCls} />
                 </div>
                 <div className="col-span-2">
-                  <label className={labelCls}>Expires (optional)</label>
-                  <input type="date" value={form.expires} onChange={(e) => setForm({ ...form, expires: e.target.value })} className={inputCls} />
+                  <label htmlFor="fld-expires-optional" className={labelCls}>Expires (optional)</label>
+                  <input id="fld-expires-optional" name="fld-expires-optional" type="date" value={form.expires} onChange={(e) => setForm({ ...form, expires: e.target.value })} className={inputCls} />
                 </div>
               </div>
             </div>

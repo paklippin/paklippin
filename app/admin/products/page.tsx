@@ -310,42 +310,42 @@ export default function AdminProductsPage() {
 
             <div className="grid grid-cols-2 gap-4 mb-4">
               <div className="col-span-2">
-                <label className={labelCls}>Name *</label>
-                <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className={inputCls} />
+                <label htmlFor="fld-name" className={labelCls}>Name *</label>
+                <input id="fld-name" name="fld-name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className={inputCls} />
               </div>
               <div>
-                <label className={labelCls}>Category</label>
-                <select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} className={inputCls}>
+                <label htmlFor="fld-category" className={labelCls}>Category</label>
+                <select id="fld-category" name="fld-category" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} className={inputCls}>
                   {['Electronics','Clothing','Sports','Beauty','Accessories','Home & Living','Books','Toys','Other'].map((c) => (
                     <option key={c}>{c}</option>
                   ))}
                 </select>
               </div>
               <div>
-                <label className={labelCls}>Badge (optional)</label>
-                <input value={form.badge} onChange={(e) => setForm({ ...form, badge: e.target.value })}
+                <label htmlFor="fld-badge-optional" className={labelCls}>Badge (optional)</label>
+                <input id="fld-badge-optional" name="fld-badge-optional" value={form.badge} onChange={(e) => setForm({ ...form, badge: e.target.value })}
                   placeholder="Sale, New, Hot" className={inputCls} />
               </div>
               <div>
-                <label className={labelCls}>Price (Rs) *</label>
+                <label htmlFor="prod-price" className={labelCls}>Price (Rs) *</label>
                 <input id="prod-price" name="price" type="number" value={form.price} onChange={(e) => setForm({ ...form, price: Number(e.target.value) })} className={inputCls} />
               </div>
               <div>
-                <label className={labelCls}>Original Price (Rs)</label>
+                <label htmlFor="prod-originalPrice" className={labelCls}>Original Price (Rs)</label>
                 <input id="prod-originalPrice" name="originalPrice" type="number" value={form.originalPrice} onChange={(e) => setForm({ ...form, originalPrice: Number(e.target.value) })} className={inputCls} />
               </div>
               <div>
-                <label className={labelCls}>Stock</label>
+                <label htmlFor="prod-stock" className={labelCls}>Stock</label>
                 <input id="prod-stock" name="stock" type="number" value={form.stock} onChange={(e) => setForm({ ...form, stock: Number(e.target.value) })} className={inputCls} />
               </div>
               <div>
-                <label className={labelCls}>Emoji (fallback)</label>
-                <input value={form.emoji} onChange={(e) => setForm({ ...form, emoji: e.target.value })}
+                <label htmlFor="fld-emoji-fallback" className={labelCls}>Emoji (fallback)</label>
+                <input id="fld-emoji-fallback" name="fld-emoji-fallback" value={form.emoji} onChange={(e) => setForm({ ...form, emoji: e.target.value })}
                   placeholder="📦" maxLength={2} className={inputCls} />
               </div>
               <div className="col-span-2">
-                <label className={labelCls}>Description</label>
-                <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })}
+                <label htmlFor="fld-description" className={labelCls}>Description</label>
+                <textarea id="fld-description" name="fld-description" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })}
                   rows={3} className={inputCls} />
               </div>
             </div>

@@ -69,16 +69,16 @@ export default function SettingsPage() {
         <div className="bg-white border border-border rounded-2xl p-6 space-y-5">
           <h2 className="font-bold text-base mb-1">Profile</h2>
           <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-text-secondary mb-2">Full Name</label>
-            <input value={name} onChange={(e) => setName(e.target.value)} className={inputCls} />
+            <label htmlFor="fld-full-name" className="block text-xs font-semibold uppercase tracking-wider text-text-secondary mb-2">Full Name</label>
+            <input id="fld-full-name" name="fld-full-name" value={name} onChange={(e) => setName(e.target.value)} className={inputCls} />
           </div>
           <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-text-secondary mb-2">Email</label>
-            <input value={user.email} disabled className={`${inputCls} opacity-60 cursor-not-allowed`} />
+            <label htmlFor="fld-email" className="block text-xs font-semibold uppercase tracking-wider text-text-secondary mb-2">Email</label>
+            <input id="fld-email" name="fld-email" value={user.email} disabled className={`${inputCls} opacity-60 cursor-not-allowed`} />
           </div>
           <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-text-secondary mb-2">Phone</label>
-            <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+92 3XX XXXXXXX" className={inputCls} />
+            <label htmlFor="fld-phone" className="block text-xs font-semibold uppercase tracking-wider text-text-secondary mb-2">Phone</label>
+            <input id="fld-phone" name="fld-phone" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+92 3XX XXXXXXX" className={inputCls} />
           </div>
         </div>
 
@@ -87,10 +87,10 @@ export default function SettingsPage() {
           <h2 className="font-bold text-base mb-4 flex items-center gap-2">
             <Globe size={18} className="text-brand-accent" /> Language
           </h2>
-          <label className="block text-xs font-semibold uppercase tracking-wider text-text-secondary mb-2">
+          <label htmlFor="fld-preferred-language" className="block text-xs font-semibold uppercase tracking-wider text-text-secondary mb-2">
             Preferred Language
           </label>
-          <select
+          <select id="fld-preferred-language" name="fld-preferred-language"
             value={lang}
             onChange={(e) => setLangState(e.target.value)}
             className={selectCls}
@@ -111,10 +111,10 @@ export default function SettingsPage() {
           <h2 className="font-bold text-base mb-4 flex items-center gap-2">
             <DollarSign size={18} className="text-brand-accent" /> Currency
           </h2>
-          <label className="block text-xs font-semibold uppercase tracking-wider text-text-secondary mb-2">
+          <label htmlFor="fld-preferred-currency" className="block text-xs font-semibold uppercase tracking-wider text-text-secondary mb-2">
             Preferred Currency
           </label>
-          <select
+          <select id="fld-preferred-currency" name="fld-preferred-currency"
             value={currency}
             onChange={(e) => setCurrencyState(e.target.value)}
             className={selectCls}

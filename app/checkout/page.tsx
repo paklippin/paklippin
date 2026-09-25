@@ -270,24 +270,24 @@ export default function CheckoutPage() {
               <h2 className="font-bold text-lg">Delivery details</h2>
               <div className="grid sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-text-secondary mb-2">Full name</label>
+                  <label htmlFor="co-name" className="block text-xs font-semibold uppercase tracking-wider text-text-secondary mb-2">Full name</label>
                   <input id="co-name" name="name" autoComplete="name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className={inputCls} required />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-text-secondary mb-2">Phone</label>
+                  <label htmlFor="co-phone" className="block text-xs font-semibold uppercase tracking-wider text-text-secondary mb-2">Phone</label>
                   <input id="co-phone" name="phone" autoComplete="tel" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="+92 3XX XXXXXXX" className={inputCls} required />
                 </div>
               </div>
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-text-secondary mb-2">Email</label>
+                <label htmlFor="co-email" className="block text-xs font-semibold uppercase tracking-wider text-text-secondary mb-2">Email</label>
                 <input id="co-email" name="email" autoComplete="email" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className={inputCls} required />
               </div>
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-text-secondary mb-2">Address</label>
+                <label htmlFor="co-address" className="block text-xs font-semibold uppercase tracking-wider text-text-secondary mb-2">Address</label>
                 <input id="co-address" name="address" autoComplete="street-address" value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} placeholder="House, street, area" className={inputCls} required />
               </div>
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-text-secondary mb-2">City</label>
+                <label htmlFor="co-city" className="block text-xs font-semibold uppercase tracking-wider text-text-secondary mb-2">City</label>
                 <select id="co-city" name="city" value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} className={inputCls}>
                   {['Faisalabad','Lahore','Karachi','Islamabad','Rawalpindi','Multan','Peshawar','Quetta','Sialkot','Gujranwala','Hyderabad','Other'].map((c) => (
                     <option key={c}>{c}</option>
@@ -295,7 +295,7 @@ export default function CheckoutPage() {
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-text-secondary mb-2">Notes (optional)</label>
+                <label htmlFor="co-notes" className="block text-xs font-semibold uppercase tracking-wider text-text-secondary mb-2">Notes (optional)</label>
                 <input id="co-notes" name="notes" value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} placeholder="Delivery instructions" className={inputCls} />
               </div>
               <button type="submit" className="w-full bg-brand-accent text-white font-semibold py-3.5 rounded-xl hover:bg-[#e55a2b] transition">
@@ -339,7 +339,7 @@ export default function CheckoutPage() {
                     </div>
                   </div>
                   <div>
-                    <label className="block text-xs font-semibold uppercase tracking-wider text-text-secondary mb-2">
+                    <label htmlFor="co-tid" className="block text-xs font-semibold uppercase tracking-wider text-text-secondary mb-2">
                       EasyPaisa Transaction ID (TID) *
                     </label>
                     <input id="co-tid" name="tid" value={txnId} onChange={(e) => setTxnId(e.target.value)} placeholder="e.g. 1234567890123" className="w-full px-4 py-3 rounded-xl border-2 border-border focus:border-brand-accent outline-none text-sm" required />

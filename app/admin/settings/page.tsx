@@ -78,21 +78,21 @@ export default function AdminSettingsPage() {
         <div className="bg-white border border-border rounded-2xl p-6 space-y-4">
           <h2 className="font-bold text-base">Store Info</h2>
           <div>
-            <label className={labelCls}>Store Name</label>
-            <input value={form.store_name} onChange={(e) => setForm({ ...form, store_name: e.target.value })} className={inputCls} />
+            <label htmlFor="fld-store-name" className={labelCls}>Store Name</label>
+            <input id="fld-store-name" name="fld-store-name" value={form.store_name} onChange={(e) => setForm({ ...form, store_name: e.target.value })} className={inputCls} />
           </div>
           <div>
-            <label className={labelCls}>Address</label>
-            <input value={form.store_address} onChange={(e) => setForm({ ...form, store_address: e.target.value })} className={inputCls} />
+            <label htmlFor="fld-address" className={labelCls}>Address</label>
+            <input id="fld-address" name="fld-address" value={form.store_address} onChange={(e) => setForm({ ...form, store_address: e.target.value })} className={inputCls} />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className={labelCls}>Phone</label>
-              <input value={form.store_phone} onChange={(e) => setForm({ ...form, store_phone: e.target.value })} className={inputCls} />
+              <label htmlFor="fld-phone" className={labelCls}>Phone</label>
+              <input id="fld-phone" name="fld-phone" value={form.store_phone} onChange={(e) => setForm({ ...form, store_phone: e.target.value })} className={inputCls} />
             </div>
             <div>
-              <label className={labelCls}>Email</label>
-              <input value={form.store_email} onChange={(e) => setForm({ ...form, store_email: e.target.value })} className={inputCls} />
+              <label htmlFor="fld-email" className={labelCls}>Email</label>
+              <input id="fld-email" name="fld-email" value={form.store_email} onChange={(e) => setForm({ ...form, store_email: e.target.value })} className={inputCls} />
             </div>
           </div>
         </div>
@@ -101,15 +101,15 @@ export default function AdminSettingsPage() {
           <h2 className="font-bold text-base">Currency & Tax</h2>
           <div className="grid grid-cols-3 gap-4">
             <div>
-              <label className={labelCls}>Currency Code</label>
-              <input value={form.currency} onChange={(e) => setForm({ ...form, currency: e.target.value.toUpperCase() })} className={inputCls} />
+              <label htmlFor="fld-currency-code" className={labelCls}>Currency Code</label>
+              <input id="fld-currency-code" name="fld-currency-code" value={form.currency} onChange={(e) => setForm({ ...form, currency: e.target.value.toUpperCase() })} className={inputCls} />
             </div>
             <div>
-              <label className={labelCls}>Symbol</label>
-              <input value={form.currency_symbol} onChange={(e) => setForm({ ...form, currency_symbol: e.target.value })} className={inputCls} />
+              <label htmlFor="fld-symbol" className={labelCls}>Symbol</label>
+              <input id="fld-symbol" name="fld-symbol" value={form.currency_symbol} onChange={(e) => setForm({ ...form, currency_symbol: e.target.value })} className={inputCls} />
             </div>
             <div>
-              <label className={labelCls}>Tax Rate (%)</label>
+              <label htmlFor="set-taxRate" className={labelCls}>Tax Rate (%)</label>
               <input id="set-taxRate" name="taxRate" type="number" value={form.tax_rate} onChange={(e) => setForm({ ...form, tax_rate: Number(e.target.value) })} className={inputCls} />
             </div>
           </div>
@@ -118,8 +118,8 @@ export default function AdminSettingsPage() {
         <div className="bg-white border border-border rounded-2xl p-6 space-y-4">
           <h2 className="font-bold text-base">Receipt</h2>
           <div>
-            <label className={labelCls}>Receipt Footer</label>
-            <textarea value={form.receipt_footer} onChange={(e) => setForm({ ...form, receipt_footer: e.target.value })}
+            <label htmlFor="fld-receipt-footer" className={labelCls}>Receipt Footer</label>
+            <textarea id="fld-receipt-footer" name="fld-receipt-footer" value={form.receipt_footer} onChange={(e) => setForm({ ...form, receipt_footer: e.target.value })}
               rows={3} className={inputCls} />
           </div>
         </div>
