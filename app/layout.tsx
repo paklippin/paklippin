@@ -1,12 +1,6 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.scss';
-import NoticeBar from '@/components/layout/NoticeBar';
-import Navbar from '@/components/layout/Navbar';
-import Footer from '@/components/layout/Footer';
-import CartProvider from '@/components/cart/CartProvider';
-import BottomNav from '@/components/layout/BottomNav';
-import ChatWidget from '@/components/chat/ChatWidget';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 
@@ -21,15 +15,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={inter.variable} data-scroll-behavior="smooth">
-      <body>
-        <NoticeBar />
-        <Navbar />
-        <main>{children}</main>
-        <Footer />
-        <CartProvider />
-        <BottomNav />
-        <ChatWidget />
-      </body>
+      <body>{children}</body>
     </html>
   );
 }
