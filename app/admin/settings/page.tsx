@@ -77,22 +77,45 @@ export default function AdminSettingsPage() {
       <div className="max-w-[700px] space-y-6">
         <div className="bg-white border border-border rounded-2xl p-6 space-y-4">
           <h2 className="font-bold text-base">Store Info</h2>
+
           <div>
-            <label htmlFor="fld-store-name" className={labelCls}>Store Name</label>
-            <input id="fld-store-name" name="fld-store-name" value={form.store_name} onChange={(e) => setForm({ ...form, store_name: e.target.value })} className={inputCls} />
+            <label htmlFor="s-store_name" className={labelCls}>Store Name</label>
+            <input
+              id="s-store_name" name="store_name"
+              value={form.store_name}
+              onChange={(e) => setForm({ ...form, store_name: e.target.value })}
+              className={inputCls}
+            />
           </div>
+
           <div>
-            <label htmlFor="fld-address" className={labelCls}>Address</label>
-            <input id="fld-address" name="fld-address" value={form.store_address} onChange={(e) => setForm({ ...form, store_address: e.target.value })} className={inputCls} />
+            <label htmlFor="s-store_address" className={labelCls}>Address</label>
+            <input
+              id="s-store_address" name="store_address"
+              value={form.store_address}
+              onChange={(e) => setForm({ ...form, store_address: e.target.value })}
+              className={inputCls}
+            />
           </div>
+
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label htmlFor="fld-phone" className={labelCls}>Phone</label>
-              <input id="fld-phone" name="fld-phone" value={form.store_phone} onChange={(e) => setForm({ ...form, store_phone: e.target.value })} className={inputCls} />
+              <label htmlFor="s-store_phone" className={labelCls}>Phone</label>
+              <input
+                id="s-store_phone" name="store_phone" type="tel"
+                value={form.store_phone}
+                onChange={(e) => setForm({ ...form, store_phone: e.target.value })}
+                className={inputCls}
+              />
             </div>
             <div>
-              <label htmlFor="fld-email" className={labelCls}>Email</label>
-              <input id="fld-email" name="fld-email" value={form.store_email} onChange={(e) => setForm({ ...form, store_email: e.target.value })} className={inputCls} />
+              <label htmlFor="s-store_email" className={labelCls}>Email</label>
+              <input
+                id="s-store_email" name="store_email" type="email"
+                value={form.store_email}
+                onChange={(e) => setForm({ ...form, store_email: e.target.value })}
+                className={inputCls}
+              />
             </div>
           </div>
         </div>
@@ -101,16 +124,31 @@ export default function AdminSettingsPage() {
           <h2 className="font-bold text-base">Currency & Tax</h2>
           <div className="grid grid-cols-3 gap-4">
             <div>
-              <label htmlFor="fld-currency-code" className={labelCls}>Currency Code</label>
-              <input id="fld-currency-code" name="fld-currency-code" value={form.currency} onChange={(e) => setForm({ ...form, currency: e.target.value.toUpperCase() })} className={inputCls} />
+              <label htmlFor="s-currency" className={labelCls}>Currency Code</label>
+              <input
+                id="s-currency" name="currency"
+                value={form.currency}
+                onChange={(e) => setForm({ ...form, currency: e.target.value.toUpperCase() })}
+                className={inputCls}
+              />
             </div>
             <div>
-              <label htmlFor="fld-symbol" className={labelCls}>Symbol</label>
-              <input id="fld-symbol" name="fld-symbol" value={form.currency_symbol} onChange={(e) => setForm({ ...form, currency_symbol: e.target.value })} className={inputCls} />
+              <label htmlFor="s-currency_symbol" className={labelCls}>Symbol</label>
+              <input
+                id="s-currency_symbol" name="currency_symbol"
+                value={form.currency_symbol}
+                onChange={(e) => setForm({ ...form, currency_symbol: e.target.value })}
+                className={inputCls}
+              />
             </div>
             <div>
-              <label htmlFor="set-taxRate" className={labelCls}>Tax Rate (%)</label>
-              <input id="set-taxRate" name="taxRate" type="number" value={form.tax_rate} onChange={(e) => setForm({ ...form, tax_rate: Number(e.target.value) })} className={inputCls} />
+              <label htmlFor="s-tax_rate" className={labelCls}>Tax Rate (%)</label>
+              <input
+                id="s-tax_rate" name="tax_rate" type="number"
+                value={form.tax_rate}
+                onChange={(e) => setForm({ ...form, tax_rate: Number(e.target.value) })}
+                className={inputCls}
+              />
             </div>
           </div>
         </div>
@@ -118,14 +156,22 @@ export default function AdminSettingsPage() {
         <div className="bg-white border border-border rounded-2xl p-6 space-y-4">
           <h2 className="font-bold text-base">Receipt</h2>
           <div>
-            <label htmlFor="fld-receipt-footer" className={labelCls}>Receipt Footer</label>
-            <textarea id="fld-receipt-footer" name="fld-receipt-footer" value={form.receipt_footer} onChange={(e) => setForm({ ...form, receipt_footer: e.target.value })}
-              rows={3} className={inputCls} />
+            <label htmlFor="s-receipt_footer" className={labelCls}>Receipt Footer</label>
+            <textarea
+              id="s-receipt_footer" name="receipt_footer"
+              value={form.receipt_footer}
+              onChange={(e) => setForm({ ...form, receipt_footer: e.target.value })}
+              rows={3}
+              className={inputCls}
+            />
           </div>
         </div>
 
-        <button onClick={handleSave} disabled={saving}
-          className="flex items-center justify-center gap-2 w-full bg-brand-accent text-white font-semibold py-3.5 rounded-xl hover:bg-[#e55a2b] transition disabled:opacity-60 text-sm">
+        <button
+          onClick={handleSave}
+          disabled={saving}
+          className="flex items-center justify-center gap-2 w-full bg-brand-accent text-white font-semibold py-3.5 rounded-xl hover:bg-[#e55a2b] transition disabled:opacity-60 text-sm"
+        >
           <Save size={16} /> {saving ? 'Saving...' : 'Save Settings'}
         </button>
       </div>
