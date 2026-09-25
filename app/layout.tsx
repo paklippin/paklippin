@@ -19,8 +19,9 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
-  const host = (headers().get('host') || '') as string;
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const headersList = await headers();
+  const host = headersList.get('host') || '';
   const isAdmin = host.startsWith('admin.');
 
   return (
