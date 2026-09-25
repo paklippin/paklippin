@@ -1,6 +1,5 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
-import { headers } from 'next/headers';
 import './globals.scss';
 import NoticeBar from '@/components/layout/NoticeBar';
 import Navbar from '@/components/layout/Navbar';
@@ -19,21 +18,17 @@ export const metadata: Metadata = {
   },
 };
 
-export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const headersList = await headers();
-  const host = headersList.get('host') || '';
-  const isAdmin = host.startsWith('admin.');
-
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={inter.variable} data-scroll-behavior="smooth">
       <body>
-        {!isAdmin && <NoticeBar />}
-        {!isAdmin && <Navbar />}
+        <NoticeBar />
+        <Navbar />
         <main>{children}</main>
-        {!isAdmin && <Footer />}
-        {!isAdmin && <CartProvider />}
-        {!isAdmin && <BottomNav />}
-        {!isAdmin && <ChatWidget />}
+        <Footer />
+        <CartProvider />
+        <BottomNav />
+        <ChatWidget />
       </body>
     </html>
   );
