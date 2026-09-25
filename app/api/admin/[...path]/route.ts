@@ -1,14 +1,19 @@
 export const runtime = 'edge';
-
 import { NextRequest, NextResponse } from 'next/server';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://shop.paklippin.com';
 
 async function forward(req: NextRequest, method: string) {
-  const path = req.nextUrl.pathname.replace('/api/admin', '');
+  // req.nextUrl.pathname = "/api/admin/users"
+  // strip "/api" only, keep "/admin/users"
+  const path = req.nextUrl.pathname.replace('/api', '');
   const url = `${API_BASE}${path}${req.nextUrl.search || ''}`;
+
   try {
-    const init: RequestInit = { method, headers: { Accept: 'application/json' } };
+    const init: RequestInit = {
+      method,
+      headers: { Accept: 'application/json' },
+    };
     if (method !== 'GET' && method !== 'DELETE') {
       init.body = await req.text();
       (init.headers as any)['Content-Type'] = 'application/json';
