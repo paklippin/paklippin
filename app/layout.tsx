@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
+import { headers } from 'next/headers';
 import './globals.scss';
 import NoticeBar from '@/components/layout/NoticeBar';
 import Navbar from '@/components/layout/Navbar';
@@ -19,16 +20,19 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
+  const host = (headers().get('host') || '') as string;
+  const isAdmin = host.startsWith('admin.');
+
   return (
     <html lang="en" className={inter.variable} data-scroll-behavior="smooth">
       <body>
-        <NoticeBar />
-        <Navbar />
-        <main className="pb-[60px] md:pb-0">{children}</main>
-        <Footer />
-        <CartProvider />
-        <BottomNav />
-        <ChatWidget />
+        {!isAdmin && <NoticeBar />}
+        {!isAdmin && <Navbar />}
+        <main>{children}</main>
+        {!isAdmin && <Footer />}
+        {!isAdmin && <CartProvider />}
+        {!isAdmin && <BottomNav />}
+        {!isAdmin && <ChatWidget />}
       </body>
     </html>
   );
